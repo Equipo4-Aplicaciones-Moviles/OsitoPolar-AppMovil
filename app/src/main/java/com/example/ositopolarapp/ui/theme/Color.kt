@@ -2,10 +2,13 @@ package com.example.ositopolarapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val OsitoBluePrimary = Color(0xFF0079C2)   // Color de Botones
+val OsitoBlueTitle = Color(0xFF208AC9)     // Color de Título (lo usaremos como Secondary)
+val OsitoWhiteLabel = Color(0xFFFFFFFF)    // Color de texto en botones
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val OsitoBackground = Color(0xFFF5F7FA)    // Background
+val OsitoSurface = Color(0xFFEBEFF5)       // F2 (Fondo de la tarjeta)
+val OsitoSurfaceVariant = Color(0xFFCFD8E8) // F1 (Borde de la tarjeta)
+val OsitoTextField = Color(0xFFDCE3EE)      // Color para Text Field (lo usaremos como 'outline' o 'primaryContainer')
+
+// Colores base de M3 (puedes borrarlos si no los usas)
