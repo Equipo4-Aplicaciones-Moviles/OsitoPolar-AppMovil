@@ -1,4 +1,4 @@
-package com.example.ositopolarapp.features.authentication.ui.screen
+package com.example.ositopolarapp.features.`client-module`.ui.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text

@@ -1,4 +1,4 @@
-package com.example.ositopolarapp.features.authentication.ui.composables
+package com.example.ositopolarapp.features.`client-module`.ui.composables
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

@@ -1,4 +1,4 @@
-package com.example.ositopolarapp.features.authentication.ui.composables
+package com.example.ositopolarapp.features.`client-module`.ui.composables
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,7 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 // Importaciones de los módulos correctos
-import com.example.ositopolarapp.features.authentication.ui.screen.MainDestinations
+import com.example.ositopolarapp.features.`client-module`.ui.screen.MainDestinations
 import com.example.ositopolarapp.ui.theme.OsitoPolarDesignBlue
 
 @Composable

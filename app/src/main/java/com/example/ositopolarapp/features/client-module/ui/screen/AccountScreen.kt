@@ -1,9 +1,8 @@
-package com.example.ositopolarapp.features.authentication.ui.screen
+package com.example.ositopolarapp.features.`client-module`.ui.screen
 
 // IMPORTS NECESARIOS
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border // Necesario si usas border en algún sitio
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape // Para la imagen de perfil
@@ -24,7 +23,7 @@ import androidx.compose.ui.unit.sp
 // Importaciones de tema
 import com.example.ositopolarapp.ui.theme.OsitoPolarAccentBlue
 // Importa el Footer común
-import com.example.ositopolarapp.features.authentication.ui.composables.FooterContent
+import com.example.ositopolarapp.features.`client-module`.ui.composables.FooterContent
 // Importar ID de recurso (si tienes imagen)
 import com.example.ositopolarapp.R // Asegúrate que tu paquete R sea correcto
 

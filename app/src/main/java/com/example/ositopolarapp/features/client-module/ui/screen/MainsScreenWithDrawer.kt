@@ -1,4 +1,4 @@
-package com.example.ositopolarapp.features.authentication.ui.screen
+package com.example.ositopolarapp.features.`client-module`.ui.screen
 
 // IMPORTS DE NAVEGACIÓN
 import androidx.navigation.compose.NavHost
@@ -9,10 +9,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.ositopolarapp.ui.theme.OsitoPolarAccentBlue
 
 // IMPORTS GENERALES
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,7 +35,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 // Importación del componente de la otra carpeta
-import com.example.ositopolarapp.features.authentication.ui.composables.DrawerContent
+import com.example.ositopolarapp.features.`client-module`.ui.composables.DrawerContent
 import kotlinx.coroutines.launch
 
 // Rutas de navegación (incluye todas las pantallas)

@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import com.example.ositopolarapp.ui.theme.OsitoPolarAppTheme
-import com.example.ositopolarapp.features.authentication.ui.screen.MainScreenWithDrawer
+import com.example.ositopolarapp.features.`client-module`.ui.screen.MainScreenWithDrawer
 
 class MainActivity : ComponentActivity() {
 

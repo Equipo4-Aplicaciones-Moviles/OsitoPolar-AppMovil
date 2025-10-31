@@ -1,4 +1,4 @@
-package com.example.ositopolarapp.features.authentication.ui.screen
+package com.example.ositopolarapp.features.`client-module`.ui.screen
 
 // IMPORTS DEL TEMA
 import com.example.ositopolarapp.ui.theme.OsitoPolarAccentBlue
@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.sp
 // <<-- IMPORTACIÓN NECESARIA PARA NavController -->>
 import androidx.navigation.NavController
 // Importa el Footer común (Asumiendo que está en composables)
-import com.example.ositopolarapp.features.authentication.ui.composables.FooterContent
+import com.example.ositopolarapp.features.`client-module`.ui.composables.FooterContent
 
 // <<-- FIRMA CORREGIDA: AÑADIDO navController -->>
 @Composable

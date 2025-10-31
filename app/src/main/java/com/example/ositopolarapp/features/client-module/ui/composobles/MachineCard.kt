@@ -1,4 +1,4 @@
-package com.example.ositopolarapp.features.authentication.ui.composables
+package com.example.ositopolarapp.features.`client-module`.ui.composables
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,10 +24,9 @@ import androidx.compose.ui.unit.sp
 // Importaciones de tema
 import com.example.ositopolarapp.ui.theme.OsitoPolarAccentBlue
 import com.example.ositopolarapp.ui.theme.OsitoPolarGreenButton
-import com.example.ositopolarapp.ui.theme.OsitoPolarRedButton
 // <<-- IMPORTACIÓN CORRECTA PARA NavHostController (Funcionará después de arreglar Gradle) -->>
 import androidx.navigation.NavHostController
-import com.example.ositopolarapp.features.authentication.ui.screen.MainDestinations
+import com.example.ositopolarapp.features.`client-module`.ui.screen.MainDestinations
 
 @Composable
 fun MachineCard(

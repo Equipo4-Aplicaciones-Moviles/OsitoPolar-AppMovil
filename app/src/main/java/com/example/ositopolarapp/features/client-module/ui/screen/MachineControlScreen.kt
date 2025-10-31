@@ -1,4 +1,4 @@
-package com.example.ositopolarapp.features.authentication.ui.screen
+package com.example.ositopolarapp.features.`client-module`.ui.screen
 
 // IMPORTS NECESARIOS
 import androidx.compose.foundation.ExperimentalFoundationApi // Necesario para Pager
@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.sp
 import com.example.ositopolarapp.ui.theme.OsitoPolarAccentBlue
 import com.example.ositopolarapp.ui.theme.OsitoPolarGreenButton
 // Importa el Footer común
-import com.example.ositopolarapp.features.authentication.ui.composables.FooterContent
+import com.example.ositopolarapp.features.`client-module`.ui.composables.FooterContent
 
 @OptIn(ExperimentalFoundationApi::class) // Habilitar API experimental de Pager
 @Composable
