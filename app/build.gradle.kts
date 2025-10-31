@@ -40,7 +40,10 @@ android {
 }
 
 dependencies {
-
+    implementation("androidx.compose.material3:material3:...") // Tu versión
+    implementation("androidx.compose.material:material-icons-core:...") // Asegúrate que esta línea exista o prueba añadirla
+    implementation("androidx.compose.material:material-icons-extended:...") // Añádela si no la tienes    implementation("androidx.navigation:navigation-compose:2.7.5")
+    implementation("androidx.navigation:navigation-compose:2.7.5")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
