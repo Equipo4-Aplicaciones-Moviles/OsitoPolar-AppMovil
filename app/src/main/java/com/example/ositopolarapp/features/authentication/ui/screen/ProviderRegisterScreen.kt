@@ -22,14 +22,14 @@ import com.example.ositopolarapp.ui.theme.OsitoPolarAppTheme
 import com.example.ositopolarapp.ui.composables.OsitoPolarFooter
 import com.example.ositopolarapp.ui.composables.OsitoPolarTopBar
 @Composable
-fun ClientRegisterScreen(
+fun ProviderRegisterScreen(
     // Devolvemos los 3 datos cuando el usuario se registra
     onSignUpClicked: (String, String, String) -> Unit,
     // Acción para volver a la pantalla de Login
     onLoginClicked: () -> Unit
 ) {
     // Estados 'falsos' locales para que la UI funcione
-    var fullName by remember { mutableStateOf("") }
+    var bussinessName by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
@@ -82,9 +82,9 @@ fun ClientRegisterScreen(
 
                     // Campo de Full Name
                     OutlinedTextField(
-                        value = fullName,
-                        onValueChange = { fullName = it },
-                        label = { Text("Full name") },
+                        value = bussinessName,
+                        onValueChange = { bussinessName = it },
+                        label = { Text("Bussiness name") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         colors = TextFieldDefaults.colors(
@@ -168,7 +168,7 @@ fun ClientRegisterScreen(
 
                     // Botón de Sign Up
                     Button(
-                        onClick = { onSignUpClicked(fullName, username, password) },
+                        onClick = { onSignUpClicked(bussinessName, username, password) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -192,9 +192,9 @@ fun ClientRegisterScreen(
 // El Preview sigue funcionando igual porque no depende de los componentes movidos
 @Preview
 @Composable
-fun RegisterClientPreview() {
+fun ProviderClientPreview() {
     OsitoPolarAppTheme {
-        ClientRegisterScreen(
+        ProviderRegisterScreen(
             onSignUpClicked = { fullname, username, password ->
                 // Preview
             },

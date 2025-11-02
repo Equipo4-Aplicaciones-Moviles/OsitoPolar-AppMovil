@@ -13,6 +13,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.ositopolarapp.ui.composables.OsitoPolarFooter
+import com.example.ositopolarapp.ui.composables.OsitoPolarTopBar
 import com.example.ositopolarapp.ui.theme.OsitoPolarAppTheme
 
 @Composable
@@ -23,11 +25,21 @@ fun ClientLoginScreen(
     // Estados 'falsos' solo para que la UI funcione y podamos escribir
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    Scaffold(
+        topBar = {
+            // 1. Llamamos al TopBar importado
+            OsitoPolarTopBar(onMenuClicked = { /* TODO: Abrir menú lateral */ })
+        },
+        bottomBar = {
+            // 2. Llamamos al Footer importado
+            OsitoPolarFooter()
+        }
+    ) { innerPadding ->
 
-    Surface(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(innerPadding)
                 .padding(32.dp)
                 .padding(vertical = 64.dp)// Padding general de la pantalla
                 .background(color = MaterialTheme.colorScheme.surfaceVariant)
@@ -72,7 +84,17 @@ fun ClientLoginScreen(
                         onValueChange = { username = it },
                         label = { Text("Username") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        colors = TextFieldDefaults.colors(
+                            unfocusedContainerColor = MaterialTheme.colorScheme.outlineVariant,
+                            focusedContainerColor = MaterialTheme.colorScheme.outlineVariant,
+                            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                        )
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -85,7 +107,17 @@ fun ClientLoginScreen(
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(), // Oculta el texto
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        colors = TextFieldDefaults.colors(
+                            unfocusedContainerColor = MaterialTheme.colorScheme.outlineVariant,
+                            focusedContainerColor = MaterialTheme.colorScheme.outlineVariant,
+                            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                        )
                     )
 
                     Spacer(modifier = Modifier.height(32.dp))
