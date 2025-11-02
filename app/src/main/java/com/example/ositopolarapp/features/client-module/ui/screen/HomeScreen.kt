@@ -14,11 +14,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-// Importaciones para Scroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,17 +30,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.shape.RoundedCornerShape
 // Importaciones de temas (colores)
 import com.example.ositopolarapp.ui.theme.OsitoPolarAccentBlue
 import com.example.ositopolarapp.ui.theme.OsitoPolarGreenButton
 import com.example.ositopolarapp.ui.theme.OsitoPolarRedButton
 // Importa el Footer común
 import com.example.ositopolarapp.features.`client-module`.ui.composables.FooterContent
-// Importaciones para imágenes (descomentar si usas painterResource)
-// import androidx.compose.foundation.Image
-// import androidx.compose.ui.res.painterResource
-// import com.example.ositopolarapp.R
 
 // ----------------------------------------------------------------------
 //                    COMPOSABLE PRINCIPAL: HomeScreen
@@ -48,13 +45,12 @@ fun HomeScreen(paddingValues: PaddingValues) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(paddingValues) // Usa el padding del Scaffold
-            .background(Color.White)
-            .padding(horizontal = 20.dp), // Padding horizontal general
+            .padding(paddingValues)
+            .background(Color.White) // Fondo blanco puro
+            .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Columna principal del contenido (CON SCROLL)
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -70,14 +66,15 @@ fun HomeScreen(paddingValues: PaddingValues) {
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // --- 2. MANTENIMIENTOS (Resumen) ---
+            // --- 2. MANTENIMIENTOS ---
             SectionTitle("Mantenimientos")
-            MaintenanceResumenItem(
+            MaintenanceCardItem(
                 title = "Vitrina vertical para congelados",
                 status = "Pendiente",
                 statusColor = OsitoPolarRedButton
             )
-            MaintenanceResumenItem(
+            Spacer(modifier = Modifier.height(8.dp))
+            MaintenanceCardItem(
                 title = "Exhibidora de helados",
                 status = "Realizado",
                 statusColor = OsitoPolarGreenButton
@@ -85,7 +82,7 @@ fun HomeScreen(paddingValues: PaddingValues) {
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // --- 3. ALQUILER (Resumen) ---
+            // --- 3. ALQUILER ---
             SectionTitle("Alquiler")
             RentResumenCard(
                 title = "Cámara frigorífica modular",
@@ -94,15 +91,16 @@ fun HomeScreen(paddingValues: PaddingValues) {
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // --- 4. ESTADOS DE CUENTA (Resumen - Alineación corregida) ---
+            // --- 4. ESTADOS DE CUENTA ---
             SectionTitle("Estados de cuenta")
-            AccountStatementItem(
+            AccountStatementCard(
                 client = "FRITMO CORP",
                 amount = "S/. 2351.23",
                 status = "Recibido",
                 statusColor = OsitoPolarGreenButton
             )
-            AccountStatementItem(
+            Spacer(modifier = Modifier.height(8.dp))
+            AccountStatementCard(
                 client = "COOLPROV S.A.C.",
                 amount = "S/. 458.5",
                 status = "Pendiente",
@@ -112,78 +110,145 @@ fun HomeScreen(paddingValues: PaddingValues) {
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // Pie de página (Importado)
+        // Pie de página
         FooterContent()
     }
 }
 
 // =========================================================================
-//                  COMPONENTES AUXILIARES PARA HOME SCREEN
+//                  COMPONENTES AUXILIARES
 // =========================================================================
 
 @Composable
 fun SectionTitle(title: String) {
     Text(
         text = title,
-        fontSize = 28.sp,
+        fontSize = 22.sp,
         fontWeight = FontWeight.Bold,
         color = OsitoPolarAccentBlue,
-        modifier = Modifier.padding(bottom = 16.dp),
+        modifier = Modifier
+            .padding(bottom = 16.dp)
+            .fillMaxWidth(),
         textAlign = TextAlign.Center
     )
 }
 
 @Composable
 fun MachineCardResumen(title: String) {
-    Box(
+    Card(
         modifier = Modifier
-            .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
+            .fillMaxWidth(0.95f),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Box(
                 modifier = Modifier
                     .size(100.dp)
-                    .background(Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
-            ) { /* Placeholder */ }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = title, fontWeight = FontWeight.SemiBold)
+                    .background(Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center
+            ) { /* Placeholder centralizado */ }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = title,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
 
 @Composable
-fun MaintenanceResumenItem(title: String, status: String, statusColor: Color) {
-    Row(
+fun MaintenanceCardItem(title: String, status: String, statusColor: Color) {
+    Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+            .fillMaxWidth(0.95f),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Text(text = title, color = Color.Black, fontSize = 14.sp)
-        Text(text = status, color = statusColor, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+        // Usamos Column para poder centrar verticalmente si el contenido crece
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = title,
+                    color = Color.Black,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(0.8f)
+                )
+                Text(
+                    text = status,
+                    color = statusColor,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(0.2f),
+                    textAlign = TextAlign.End
+                )
+            }
+        }
     }
 }
 
 @Composable
 fun RentResumenCard(title: String, price: String) {
-    Box(
+    Card(
         modifier = Modifier
-            .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
+            .fillMaxWidth(0.95f),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(16.dp)
+        ) {
             Box(
                 modifier = Modifier
-                    .size(100.dp)
-                    .background(Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
-            ) { /* Placeholder */ }
+                    .size(120.dp)
+                    .background(Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center
+            ) { /* Placeholder centralizado */ }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = title,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Text(
+                text = price,
+                color = OsitoPolarRedButton,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                modifier = Modifier.padding(top = 6.dp)
+            )
+
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = title, fontWeight = FontWeight.SemiBold)
-            Text(text = price, color = OsitoPolarRedButton, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Spacer(modifier = Modifier.height(8.dp))
+
             Button(
                 onClick = { /* Acción Solicitar */ },
                 shape = RoundedCornerShape(8.dp),
@@ -196,35 +261,41 @@ fun RentResumenCard(title: String, price: String) {
 }
 
 @Composable
-fun AccountStatementItem(client: String, amount: String, status: String, statusColor: Color) {
-    Row(
+fun AccountStatementCard(client: String, amount: String, status: String, statusColor: Color) {
+    Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .fillMaxWidth(0.95f),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Text(
-            text = client,
-            fontWeight = FontWeight.Medium,
-            fontSize = 14.sp,
-            modifier = Modifier.weight(0.4f)
-        )
-        Text(
-            text = amount,
-            color = Color.Black,
-            fontSize = 14.sp,
-            modifier = Modifier.weight(0.3f),
-            textAlign = TextAlign.Center
-        )
-        Text(
-            text = status,
-            color = statusColor,
-            fontWeight = FontWeight.Medium,
-            fontSize = 14.sp,
-            modifier = Modifier.weight(0.3f),
-            textAlign = TextAlign.End
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = client,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                modifier = Modifier.weight(0.45f)
+            )
+            Text(
+                text = amount,
+                color = Color.Black,
+                fontSize = 14.sp,
+                modifier = Modifier.weight(0.30f),
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = status,
+                color = statusColor,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
+                modifier = Modifier.weight(0.25f),
+                textAlign = TextAlign.End
+            )
+        }
     }
 }
-
-// FooterContent y SmallTextLinkHome ahora se importan desde CommonComposables.kt
