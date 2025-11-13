@@ -9,72 +9,96 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+// Eliminamos el import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ositopolarapp.features.authentication.data.dto.CompleteRegistrationRequest
 import com.example.ositopolarapp.features.authentication.presentation.state.RegistrationViewModel
 
 /**
- * NOTA: Esta pantalla asume que recibe el 'planId' y 'userType'
- * desde la pantalla anterior (por ejemplo, una pantalla de selección de planes).
+ * Pantalla de registro.
+ * Recibe el ViewModel inyectado por la AuthViewModelFactory.
  */
 @Composable
 fun RegistrationScreen(
-    viewModel: RegistrationViewModel = viewModel(), // ¡OJO! Ver nota al final
+    // 1. ELIMINAMOS la inicialización local y SOLO lo RECIBIMOS.
+    viewModel: RegistrationViewModel,
     planId: Int,
     userType: String,
+    deepLinkUri: Uri?, // Parámetro para manejar el regreso del pago
     onRegistrationSuccess: () -> Unit // Para navegar al login
 ) {
     // --- ViewModel y Estado de la UI ---
-
-    // TODO: Necesitarás un ViewModelFactory para inyectar los UseCases
-    val viewModel: RegistrationViewModel = viewModel()
-
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
     // --- Estado para todos los campos del formulario ---
-    var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
-    var companyName by remember { mutableStateOf("") } // Opcional
-    var taxId by remember { mutableStateOf("") }       // Opcional
-    var street by remember { mutableStateOf("") }
-    var number by remember { mutableStateOf("") }
-    var city by remember { mutableStateOf("") }
-    var postalCode by remember { mutableStateOf("") }
-    var country by remember { mutableStateOf("") }
+    var username by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var firstName by rememberSaveable { mutableStateOf("") }
+    var lastName by rememberSaveable { mutableStateOf("") }
+    var companyName by rememberSaveable { mutableStateOf("") }
+    var taxId by rememberSaveable { mutableStateOf("") }
+    var street by rememberSaveable { mutableStateOf("") }
+    var number by rememberSaveable { mutableStateOf("") }
+    var city by rememberSaveable { mutableStateOf("") }
+    var postalCode by rememberSaveable { mutableStateOf("") }
+    var country by rememberSaveable { mutableStateOf("") }
 
     // --- Manejo de Efectos (Reacciones al Estado) ---
 
-    // 1. Reacciona cuando la 'checkoutUrl' aparece
+    // 1. Reacciona cuando la 'checkoutUrl' aparece (Abrir Navegador)
     LaunchedEffect(uiState.checkoutUrl) {
         uiState.checkoutUrl?.let { url ->
-            // Abre la URL de pago en un navegador (Chrome Custom Tab es mejor)
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
             try {
                 context.startActivity(intent)
+                // Es importante limpiar la URL después de usarla para evitar reejecuciones
+                // (Aunque la lógica de limpieza la manejamos mejor en el ViewModel o MainActivity,
+                // la acción de abrir el navegador es la principal aquí).
+                viewModel.clearCheckoutUrl()
             } catch (e: Exception) {
-                // Manejar error (ej. no hay navegador)
-                Toast.makeText(context, "No se puede abrir el navegador", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "No se puede abrir el navegador: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    // 2. Reacciona cuando el registro se completa con éxito
+    // 2. Reacciona al Deep Link (Paso 2: Completar Registro)
+    LaunchedEffect(deepLinkUri) {
+        deepLinkUri?.let { uri ->
+            // El Deep Link esperado es ositopolar://registration/success?session_id=...
+            if (uri.path == "/success") {
+                val sessionId = uri.getQueryParameter("session_id")
+
+                if (sessionId != null) {
+                    // Llama al ViewModel para completar el registro (Paso 2)
+                    viewModel.completeRegistration(sessionId)
+                } else {
+                    Toast.makeText(context, "Error: Sesión de pago inválida.", Toast.LENGTH_LONG).show()
+                }
+            } else if (uri.path == "/cancel") {
+                Toast.makeText(context, "Pago cancelado. Intenta de nuevo.", Toast.LENGTH_LONG).show()
+            }
+            // Después de procesar, la Activity debería limpiar el URI para que este efecto no se repita
+            // (Esta limpieza ocurre en tu MainActivity, pero aquí manejamos el proceso).
+        }
+    }
+
+    // 3. Reacciona cuando el registro se completa con éxito
     LaunchedEffect(uiState.registrationComplete) {
         if (uiState.registrationComplete) {
-            Toast.makeText(context, "¡Registro Exitoso!", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "¡Registro Exitoso! Puedes iniciar sesión.", Toast.LENGTH_LONG).show()
             onRegistrationSuccess() // Navega a la pantalla de Login
         }
     }
 
-    // 3. Reacciona si hay un error
+    // 4. Reacciona si hay un error
     LaunchedEffect(uiState.error) {
         uiState.error?.let { errorMsg ->
             Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
@@ -95,7 +119,7 @@ fun RegistrationScreen(
             Text("Crear Cuenta ($userType)", style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(16.dp))
 
-            // --- Campos del Formulario ---
+            // --- Campos del Formulario (Usando rememberSaveable) ---
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
@@ -110,7 +134,7 @@ fun RegistrationScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth()
             )
-            // ... (Campos de firstName, lastName) ...
+            // ... (Campos firstName, lastName, Dirección, Compañía...)
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = firstName,
@@ -192,15 +216,15 @@ fun RegistrationScreen(
             // --- Botón de Envío ---
             Button(
                 onClick = {
-                    // 1. Validar campos (básico)
-                    if (username.isBlank() || email.isBlank() /* ...etc... */) {
-                        Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+                    // 1. Validación básica de campos
+                    if (username.isBlank() || email.isBlank() || firstName.isBlank() || lastName.isBlank()) {
+                        Toast.makeText(context, "Completa los campos de nombre y email.", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
 
                     // 2. Crear el objeto de datos del formulario
                     val formData = CompleteRegistrationRequest(
-                        sessionId = "", // Vacío por ahora, la API no lo usa en el Paso 1
+                        sessionId = "",
                         username = username,
                         email = email,
                         firstName = firstName,
@@ -214,14 +238,14 @@ fun RegistrationScreen(
                         taxId = if (userType == "Provider") taxId else null
                     )
 
-                    // 3. Llamar al ViewModel (Paso 1)
+                    // 3. Llamar al ViewModel (Paso 1: Crear Checkout)
                     viewModel.createCheckout(
                         planId = planId,
                         userType = userType,
                         formData = formData
                     )
                 },
-                enabled = !uiState.isLoading, // Deshabilita el botón si está cargando
+                enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
@@ -237,7 +261,6 @@ fun RegistrationScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .matchParentSize()
-                // .background(Color.Black.copy(alpha = 0.5f)) // Fondo oscuro opcional
             ) {
                 CircularProgressIndicator()
             }

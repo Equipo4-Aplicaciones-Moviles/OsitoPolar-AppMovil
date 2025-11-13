@@ -5,6 +5,7 @@ import com.example.ositopolarapp.features.authentication.domain.model.Authentica
 import com.example.ositopolarapp.features.authentication.domain.model.RegistrationCheckoutEntity
 import com.example.ositopolarapp.features.authentication.domain.model.LoginRequestDto
 import com.example.ositopolarapp.features.authentication.domain.model.LoginResponseDto
+import kotlinx.coroutines.flow.Flow
 
 interface AuthRepository {
 
@@ -20,6 +21,16 @@ interface AuthRepository {
     suspend fun signIn( // <-- ¡Debe tener "suspend"!
         username: String,
         password: String
+    ): Result<AuthenticatedUserEntity>
+
+    fun getSessionToken(): Flow<String?>
+
+    // Para cerrar la sesión
+    suspend fun signOut()
+
+    suspend fun verifyTwoFactor(
+        username: String,
+        code: String
     ): Result<AuthenticatedUserEntity>
 
 

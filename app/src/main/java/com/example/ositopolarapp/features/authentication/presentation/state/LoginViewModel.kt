@@ -9,24 +9,26 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
+import com.example.ositopolarapp.features.authentication.domain.usecase.VerifyTwoFactorUseCase
 // Define los estados posibles de la UI de Login
 data class LoginUiState(
     val isLoading: Boolean = false,
     val loginSuccess: Boolean = false,
     val requires2FA: Boolean = false,
     val error: String? = null,
+    val isVerifying2FA: Boolean = false,
     val user: AuthenticatedUserEntity? = null // Para guardar datos si pide 2FA
 )
 
 class LoginViewModel(
-    private val signInUseCase: SignInUseCase
+    private val signInUseCase: SignInUseCase,
+    private val verifyTwoFactorUseCase: VerifyTwoFactorUseCase
     // TODO: Aquí también irá el VerifyTwoFactorUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
-
+    private var pendingUser: AuthenticatedUserEntity? = null
     fun signIn(username: String, password: String) {
         // Validación simple
         if (username.isBlank() || password.isBlank()) {
@@ -44,16 +46,17 @@ class LoginViewModel(
                     // 3. Éxito
 
                     // TODO: Manejar el 2FA
-                    if (user.requires2FA) {
+                    if (user.requires2FA) { // Suponiendo que la entidad tiene este flag
+                        pendingUser = user // Guardamos temporalmente el usuario
                         _uiState.update {
-                            it.copy(isLoading = false, requires2FA = true, user = user)
+                            it.copy(isLoading = false, requires2FA = true, user = user) // Transiciona a 2FA
                         }
                     } else {
-                        // ¡Login exitoso!
-                        // TODO: Guardar el token en Room/DataStore
+                        // Login exitoso
                         _uiState.update {
                             it.copy(isLoading = false, loginSuccess = true, user = user)
                         }
+                        // TODO: Aquí también deberías guardar el token si lo haces manual en el ViewModel
                     }
                 }
                 .onFailure { error ->
@@ -62,6 +65,47 @@ class LoginViewModel(
                         it.copy(isLoading = false, error = error.message ?: "Error desconocido")
                     }
                 }
+        }
+    }
+
+    fun verify2FACode(code: String) {
+        val userToVerify = _uiState.value.user // Usamos el usuario que ya está en el estado
+
+        if (userToVerify == null || code.isBlank()) {
+            _uiState.update { it.copy(requires2FA = false, error = "Error de sesión. Vuelve a iniciar sesión.") }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isVerifying2FA = true, error = null) }
+
+            verifyTwoFactorUseCase(userToVerify.username, code)
+                .onSuccess { finalUser ->
+                    // Éxito: Login completo!
+                    _uiState.update {
+                        it.copy(isVerifying2FA = false, requires2FA = false, loginSuccess = true, user = finalUser)
+                    }
+                    // El token ya se guardó en Room dentro del AuthRepositoryImpl
+                }
+                .onFailure { error ->
+                    // Fracaso: Código incorrecto
+                    _uiState.update {
+                        it.copy(isVerifying2FA = false, error = error.message ?: "Código 2FA incorrecto.")
+                    }
+                }
+        }
+    }
+
+    // 5. Función para que la UI pueda cerrar el diálogo de 2FA
+    fun dismiss2FADialog() {
+        // CORRECCIÓN: Quitamos 'pendingUser = null' y limpiamos el 'user' y el 'error'.
+        _uiState.update {
+            it.copy(
+                requires2FA = false,
+                isVerifying2FA = false,
+                user = null, // Limpiamos el usuario temporal
+                error = null // Limpiamos el error
+            )
         }
     }
 }

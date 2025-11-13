@@ -5,6 +5,7 @@ import com.example.ositopolarapp.features.authentication.data.dto.CreateRegistra
 import com.example.ositopolarapp.features.authentication.data.dto.RegistrationCheckoutResponse
 import com.example.ositopolarapp.features.authentication.data.dto.SignInRequest
 import com.example.ositopolarapp.features.authentication.data.dto.SignInResponse
+import com.example.ositopolarapp.features.authentication.data.dto.Verify2FARequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
@@ -31,6 +32,11 @@ interface AuthApiService {
     @POST("/api/v1/authentication/sign-in")
     suspend fun signIn(
         @Body request: SignInRequest
+    ): Response<SignInResponse>
+
+    @POST("/api/v1/authentication/verify-2fa")
+    suspend fun verifyTwoFactor(
+        @Body request: Verify2FARequest
     ): Response<SignInResponse>
 
 

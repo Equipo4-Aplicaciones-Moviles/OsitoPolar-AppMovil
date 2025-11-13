@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ositopolarapp.core.di.AuthViewModelFactory
 import com.example.ositopolarapp.features.authentication.presentation.state.LoginViewModel
+import com.example.ositopolarapp.features.authentication.presentation.components.TwoFactorVerificationDialog
 
 @Composable
 fun LoginScreen(
@@ -50,6 +51,10 @@ fun LoginScreen(
         uiState.error?.let {
             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
         }
+    }
+
+    if (uiState.requires2FA) {
+        TwoFactorVerificationDialog(viewModel = viewModel, uiState = uiState)
     }
 
     // --- UI ---

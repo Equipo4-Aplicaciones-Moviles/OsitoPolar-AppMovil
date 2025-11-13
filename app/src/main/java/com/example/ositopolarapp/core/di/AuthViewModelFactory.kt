@@ -29,7 +29,8 @@ class AuthViewModelFactory(
 
         if (modelClass.isAssignableFrom(LoginViewModel::class.java)) {
             return LoginViewModel(
-                signInUseCase = container.signInUseCase
+                signInUseCase = container.signInUseCase,
+                verifyTwoFactorUseCase = container.verifyTwoFactorUseCase
             ) as T
         }
 

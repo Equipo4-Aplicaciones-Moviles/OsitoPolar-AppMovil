@@ -69,4 +69,12 @@ dependencies {
     implementation(libs.okhttp)                     // <-- AÑADE ESTA LÍNEA
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+
+    val room_version = "2.6.1" // Puedes verificar la última versión
+    implementation("androidx.room:room-runtime:$room_version")
+    ksp("androidx.room:room-compiler:$room_version")
+    // Para usar Coroutines Flow con Room
+    implementation("androidx.room:room-ktx:$room_version")
+
+
 }

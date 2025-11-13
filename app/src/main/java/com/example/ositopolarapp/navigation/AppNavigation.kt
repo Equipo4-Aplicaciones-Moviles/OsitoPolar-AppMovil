@@ -2,6 +2,7 @@ package com.example.ositopolarapp.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
+import android.net.Uri
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.ositopolarapp.features.authentication.presentation.state.LoginViewModel
@@ -28,14 +29,15 @@ import com.example.ositopolarapp.features.authentication.presentation.screens.Lo
 import com.example.ositopolarapp.features.authentication.presentation.screens.RegistrationScreen
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(appContainer: AppContainer,deepLinkUri: Uri?) {
+
 
     // 1. El controlador que maneja las rutas de navegación
     val navController = rememberNavController()
 
     // 2. ¡Nuestra DI! Creamos el contenedor y la fábrica
     // 'remember' es clave para que no se re-creen en cada recomposición
-    val appContainer = remember { AppContainer() }
+    //val appContainer = remember { AppContainer() }
     val authViewModelFactory = remember { AuthViewModelFactory(appContainer) }
 
     // 3. El NavHost que define todas las rutas (pantallas)
@@ -81,7 +83,8 @@ fun AppNavigation() {
                     factory = authViewModelFactory
                 ),
                 planId = planId,
-                userType = "Owner", // O pasarlo como argumento
+                userType = "Owner",
+                deepLinkUri = deepLinkUri,// O pasarlo como argumento
                 onRegistrationSuccess = {
                     // Cuando el registro termine, ir al login
                     navController.navigate("login") {

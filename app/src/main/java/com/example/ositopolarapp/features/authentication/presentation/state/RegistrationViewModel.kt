@@ -85,4 +85,8 @@ class RegistrationViewModel(
                 }
         }
     }
+
+    fun clearCheckoutUrl() {
+        _uiState.update { it.copy(checkoutUrl = null) }
+    }
 }
