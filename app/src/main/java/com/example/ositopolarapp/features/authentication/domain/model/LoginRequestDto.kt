@@ -1,4 +1,4 @@
-package com.example.ositopolarapp.core.domain.models
+package com.example.ositopolarapp.features.authentication.domain.model
 
 data class LoginRequestDto(
     val username: String,

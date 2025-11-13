@@ -1,4 +1,4 @@
-package com.example.ositopolarapp.core.domain.models
+package com.example.ositopolarapp.features.authentication.domain.model
 
 // Coincide con el Schema del request body de sign-up
 data class RegisterRequestDto(

@@ -11,6 +11,12 @@ import androidx.compose.ui.Modifier
 import com.example.ositopolarapp.navigation.AppNavigation
 import com.example.ositopolarapp.ui.theme.OsitoPolarAppTheme
 
+import com.example.ositopolarapp.core.di.AppContainer
+import com.example.ositopolarapp.core.di.AuthViewModelFactory
+
+import com.example.ositopolarapp.features.authentication.presentation.screens.LoginScreen
+import com.example.ositopolarapp.features.authentication.presentation.screens.RegistrationScreen
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

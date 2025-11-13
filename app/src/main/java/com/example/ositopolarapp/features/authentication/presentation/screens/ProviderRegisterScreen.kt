@@ -1,8 +1,9 @@
-package com.example.ositopolarapp.features.authentication.ui.screen
+package com.example.ositopolarapp.features.authentication.presentation.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -13,18 +14,23 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.ositopolarapp.ui.composables.OsitoPolarFooter
-import com.example.ositopolarapp.ui.composables.OsitoPolarTopBar
 import com.example.ositopolarapp.ui.theme.OsitoPolarAppTheme
 
+import com.example.ositopolarapp.ui.composables.OsitoPolarFooter
+import com.example.ositopolarapp.ui.composables.OsitoPolarTopBar
 @Composable
-fun ClientLoginScreen(
-    onLoginClicked: (String, String) -> Unit, // Devuelve usuario y pass
-    onRegisterClicked: () -> Unit
+fun ProviderRegisterScreen(
+    // Devolvemos los 3 datos cuando el usuario se registra
+    onSignUpClicked: (String, String, String) -> Unit,
+    // Acción para volver a la pantalla de Login
+    onLoginClicked: () -> Unit
 ) {
-    // Estados 'falsos' solo para que la UI funcione y podamos escribir
+    // Estados 'falsos' locales para que la UI funcione
+    var bussinessName by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var rememberMe by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             // 1. Llamamos al TopBar importado
@@ -40,45 +46,59 @@ fun ClientLoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(32.dp)
-                .padding(vertical = 64.dp)// Padding general de la pantalla
                 .background(color = MaterialTheme.colorScheme.surfaceVariant)
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center
         ) {
 
             Card(
                 modifier = Modifier
-                    //.align(Alignment.Center) // Centramos la tarjeta
                     .fillMaxWidth()
-                    .align(Alignment.Center)
-                    // Damos un padding horizontal para que no toque los bordes
-                    .padding(horizontal = 16.dp)
                     .padding(vertical = 16.dp),
                 colors = CardDefaults.cardColors(
-                    // Usamos el color 'surface' (F2 EBEFF5)
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.surface
                 ),
-                // Añadimos el borde (F1 CFD8E8)
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
             )
             {
-
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
 
                     Text(
-                        text = "Sign In",
+                        text = "Register",
                         style = MaterialTheme.typography.headlineLarge,
                         color = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.padding(bottom = 32.dp)
                     )
 
-                    // Campo de Usuario
+                    // Campo de Full Name
+                    OutlinedTextField(
+                        value = bussinessName,
+                        onValueChange = { bussinessName = it },
+                        label = { Text("Bussiness name") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        colors = TextFieldDefaults.colors(
+                            unfocusedContainerColor = MaterialTheme.colorScheme.outlineVariant,
+                            focusedContainerColor = MaterialTheme.colorScheme.outlineVariant,
+                            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Campo de Username
                     OutlinedTextField(
                         value = username,
                         onValueChange = { username = it },
@@ -106,8 +126,9 @@ fun ClientLoginScreen(
                         label = { Text("Password") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(), // Oculta el texto
+                        visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        shape = RoundedCornerShape(12.dp),
                         colors = TextFieldDefaults.colors(
                             unfocusedContainerColor = MaterialTheme.colorScheme.outlineVariant,
                             focusedContainerColor = MaterialTheme.colorScheme.outlineVariant,
@@ -120,53 +141,64 @@ fun ClientLoginScreen(
                         )
                     )
 
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Fila para el Checkbox "Remember me"
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Checkbox(
+                            checked = rememberMe,
+                            onCheckedChange = { rememberMe = it }
+                        )
+                        Text(
+                            text = "Remember me",
+                            modifier = Modifier.padding(start = 2.dp),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // Botón de Sign In
+                    // Botón de Sign Up
                     Button(
-                        onClick = { onLoginClicked(username, password) },
+                        onClick = { onSignUpClicked(bussinessName, username, password) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(text = "Sign In")
+                        Text(text = "Sign Up")
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Texto para registrarse
-                    Text(
-                        text = "Don't have an account?"
-                    )
-
-                    TextButton(onClick = onRegisterClicked) {
-                        Text("Register")
+                    // Texto para ir a Login
+                    TextButton(onClick = onLoginClicked) {
+                        Text("Already have an account? Login")
                     }
                 }
-
-
             }
         }
     }
 }
 
+// El Preview sigue funcionando igual porque no depende de los componentes movidos
 @Preview
 @Composable
-fun SimpleComposablePreview() {
+fun ProviderClientPreview() {
     OsitoPolarAppTheme {
-        ClientLoginScreen(
-            // 1. Pasa una lambda vacía que acepta dos strings
-            onLoginClicked = { username, password ->
-                // En un preview, esto se deja vacío o se puede
-                // imprimir a la consola para depurar:
-                // Log.d("Preview", "User: $username, Pass: $password")
+        ProviderRegisterScreen(
+            onSignUpClicked = { fullname, username, password ->
+                // Preview
             },
-            // 2. Pasa una lambda vacía simple
-            onRegisterClicked = {
-                // Vacío para el preview
+            onLoginClicked = {
+                // Preview
             }
         )
     }
-    // 3. Quita el ': Unit' de aquí, no va en una llamada de función
 }
+

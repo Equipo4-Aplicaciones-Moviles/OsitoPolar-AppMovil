@@ -1,4 +1,4 @@
-package com.example.ositopolarapp.core.domain.models
+package com.example.ositopolarapp.features.authentication.domain.model
 
 // Coincide con el Schema de la respuesta 200 de sign-in
 data class LoginResponseDto(

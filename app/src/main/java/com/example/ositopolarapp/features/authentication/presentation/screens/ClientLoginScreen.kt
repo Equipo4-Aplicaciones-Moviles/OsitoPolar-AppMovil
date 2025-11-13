@@ -1,4 +1,4 @@
-package com.example.ositopolarapp.features.authentication.ui.screen
+package com.example.ositopolarapp.features.authentication.presentation.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -18,14 +18,13 @@ import com.example.ositopolarapp.ui.composables.OsitoPolarTopBar
 import com.example.ositopolarapp.ui.theme.OsitoPolarAppTheme
 
 @Composable
-fun ProviderLoginScreen(
+fun ClientLoginScreen(
     onLoginClicked: (String, String) -> Unit, // Devuelve usuario y pass
     onRegisterClicked: () -> Unit
 ) {
     // Estados 'falsos' solo para que la UI funcione y podamos escribir
-    var bussinessName by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-
     Scaffold(
         topBar = {
             // 1. Llamamos al TopBar importado
@@ -36,6 +35,7 @@ fun ProviderLoginScreen(
             OsitoPolarFooter()
         }
     ) { innerPadding ->
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -80,9 +80,9 @@ fun ProviderLoginScreen(
 
                     // Campo de Usuario
                     OutlinedTextField(
-                        value = bussinessName,
-                        onValueChange = { bussinessName = it },
-                        label = { Text("Enter your bussiness name") },
+                        value = username,
+                        onValueChange = { username = it },
+                        label = { Text("Username") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         colors = TextFieldDefaults.colors(
@@ -124,7 +124,7 @@ fun ProviderLoginScreen(
 
                     // Botón de Sign In
                     Button(
-                        onClick = { onLoginClicked(bussinessName, password) },
+                        onClick = { onLoginClicked(username, password) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -153,11 +153,11 @@ fun ProviderLoginScreen(
 
 @Preview
 @Composable
-fun ProviderLoginPreview() {
+fun SimpleComposablePreview() {
     OsitoPolarAppTheme {
-        ProviderLoginScreen(
+        ClientLoginScreen(
             // 1. Pasa una lambda vacía que acepta dos strings
-            onLoginClicked = { bussinessName, password ->
+            onLoginClicked = { username, password ->
                 // En un preview, esto se deja vacío o se puede
                 // imprimir a la consola para depurar:
                 // Log.d("Preview", "User: $username, Pass: $password")

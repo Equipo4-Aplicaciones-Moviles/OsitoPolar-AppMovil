@@ -1,6 +1,5 @@
-package com.example.ositopolarapp.features.authentication.ui.screen
+package com.example.ositopolarapp.features.authentication.presentation.screens
 
-import android.icu.text.CaseMap
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -11,10 +10,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.AlignmentLine
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.ositopolarapp.ui.theme.OsitoPolarAppTheme
@@ -22,14 +19,14 @@ import com.example.ositopolarapp.ui.theme.OsitoPolarAppTheme
 import com.example.ositopolarapp.ui.composables.OsitoPolarFooter
 import com.example.ositopolarapp.ui.composables.OsitoPolarTopBar
 @Composable
-fun ProviderRegisterScreen(
+fun ClientRegisterScreen(
     // Devolvemos los 3 datos cuando el usuario se registra
     onSignUpClicked: (String, String, String) -> Unit,
     // Acción para volver a la pantalla de Login
     onLoginClicked: () -> Unit
 ) {
     // Estados 'falsos' locales para que la UI funcione
-    var bussinessName by remember { mutableStateOf("") }
+    var fullName by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
@@ -82,9 +79,9 @@ fun ProviderRegisterScreen(
 
                     // Campo de Full Name
                     OutlinedTextField(
-                        value = bussinessName,
-                        onValueChange = { bussinessName = it },
-                        label = { Text("Bussiness name") },
+                        value = fullName,
+                        onValueChange = { fullName = it },
+                        label = { Text("Full name") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         colors = TextFieldDefaults.colors(
@@ -168,7 +165,7 @@ fun ProviderRegisterScreen(
 
                     // Botón de Sign Up
                     Button(
-                        onClick = { onSignUpClicked(bussinessName, username, password) },
+                        onClick = { onSignUpClicked(fullName, username, password) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -192,9 +189,9 @@ fun ProviderRegisterScreen(
 // El Preview sigue funcionando igual porque no depende de los componentes movidos
 @Preview
 @Composable
-fun ProviderClientPreview() {
+fun RegisterClientPreview() {
     OsitoPolarAppTheme {
-        ProviderRegisterScreen(
+        ClientRegisterScreen(
             onSignUpClicked = { fullname, username, password ->
                 // Preview
             },

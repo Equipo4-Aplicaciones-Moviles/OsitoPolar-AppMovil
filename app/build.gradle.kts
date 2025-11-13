@@ -66,4 +66,7 @@ dependencies {
     annotationProcessor(libs.room.compiler)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
+    implementation(libs.okhttp)                     // <-- AÑADE ESTA LÍNEA
+    implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
 }
