@@ -14,6 +14,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.ositopolarapp.features.equipment.domain.model.Equipment
+import com.example.ositopolarapp.features.analytics.presentation.state.AnalyticsUiState
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 /**
  * Equipment Analytics Screen
@@ -25,23 +29,30 @@ import com.example.ositopolarapp.features.equipment.domain.model.Equipment
  * - Health metrics
  * - Performance insights
  *
- * NOTE: Using mock data for charts. Real implementation would fetch from:
- * GET /api/v1/analytics/equipments/{id}/readings
- * GET /api/v1/analytics/equipments/{id}/summaries
+ * Now integrated with real backend data via AnalyticsViewModel
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EquipmentAnalyticsScreen(
     equipment: Equipment,
+    analyticsState: AnalyticsUiState,
+    onRefresh: () -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Mock temperature data for last 24 hours
-    val temperatureData = remember {
-        List(24) { hour ->
-            val temp = equipment.optimalTemperatureMin +
-                       (Math.random() * (equipment.optimalTemperatureMax - equipment.optimalTemperatureMin))
-            Pair(hour, temp)
+    // Extract temperature readings from analytics state
+    val temperatureReadings = remember(analyticsState.readings) {
+        analyticsState.readings
+            .filter { it.type == "temperature" }
+            .sortedBy { it.timestamp }
+    }
+
+    // Convert readings to chart data format (hour, temperature)
+    val temperatureData = remember(temperatureReadings) {
+        temperatureReadings.map { reading ->
+            val instant = Instant.parse(reading.timestamp)
+            val hour = instant.atZone(ZoneId.systemDefault()).hour
+            Pair(hour, reading.value)
         }
     }
 
@@ -70,7 +81,7 @@ fun EquipmentAnalyticsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO: Refresh data */ }) {
+                    IconButton(onClick = onRefresh) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = "Actualizar"
@@ -81,14 +92,46 @@ fun EquipmentAnalyticsScreen(
         },
         modifier = modifier
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            // Main content
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Show error if exists
+                if (analyticsState.error != null) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Text(
+                            text = "Error: ${analyticsState.error}",
+                            modifier = Modifier.padding(16.dp),
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
+
+                // Show message if no data
+                if (!analyticsState.isLoading && temperatureData.isEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Text(
+                            text = "No hay datos de analíticas disponibles. Los datos se generan cuando el equipo envía lecturas de temperatura y energía.",
+                            modifier = Modifier.padding(16.dp),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
             // Current Status Card
             CurrentStatusCard(equipment = equipment)
 
@@ -119,6 +162,14 @@ fun EquipmentAnalyticsScreen(
 
             // Performance Insights
             PerformanceInsightsCard(equipment = equipment)
+            }
+
+            // Loading indicator
+            if (analyticsState.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
         }
     }
 }

@@ -31,3 +31,10 @@ data class CompleteRegistrationRequest(
     @SerializedName("companyName") val companyName: String?,
     @SerializedName("taxId") val taxId: String?
 )
+
+// Lo que RECIBIMOS en el Paso 2 (credenciales generadas)
+data class CompleteRegistrationResponse(
+    @SerializedName("username") val username: String,
+    @SerializedName("password") val password: String,
+    @SerializedName("message") val message: String? = null
+)
