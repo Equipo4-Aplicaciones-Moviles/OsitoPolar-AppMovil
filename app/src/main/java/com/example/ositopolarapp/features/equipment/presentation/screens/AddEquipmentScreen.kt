@@ -36,6 +36,22 @@ fun AddEquipmentScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
 
+    // Handle success/error feedback
+    LaunchedEffect(uiState.createSuccess) {
+        if (uiState.createSuccess) {
+            Toast.makeText(context, "Equipo agregado exitosamente", Toast.LENGTH_SHORT).show()
+            viewModel.clearCreateSuccess()
+            onNavigateBack()
+        }
+    }
+
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let { errorMsg ->
+            Toast.makeText(context, "Error: $errorMsg", Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
+    }
+
     // Form state
     var name by remember { mutableStateOf("") }
     var type by remember { mutableStateOf("Refrigerator") }
@@ -398,10 +414,45 @@ fun AddEquipmentScreen(
                     if (name.isNotBlank() && model.isNotBlank() && manufacturer.isNotBlank() &&
                         locationName.isNotBlank() && locationAddress.isNotBlank()
                     ) {
-                        // TODO: Call viewModel.createEquipment()
-                        Toast.makeText(context, "Equipo agregado exitosamente", Toast.LENGTH_SHORT)
-                            .show()
-                        onNavigateBack()
+                        // Create Equipment object from form data
+                        val equipment = com.example.ositopolarapp.features.equipment.domain.model.Equipment(
+                            id = 0, // Backend will assign ID
+                            name = name,
+                            type = when (type) {
+                                "Freezer" -> com.example.ositopolarapp.features.equipment.domain.model.EquipmentType.FREEZER
+                                "Cold Room" -> com.example.ositopolarapp.features.equipment.domain.model.EquipmentType.COLD_ROOM
+                                else -> com.example.ositopolarapp.features.equipment.domain.model.EquipmentType.REFRIGERATOR
+                            },
+                            model = model,
+                            manufacturer = manufacturer,
+                            serialNumber = serialNumber,
+                            code = code,
+                            cost = cost.toDoubleOrNull() ?: 0.0,
+                            technicalDetails = technicalDetails,
+                            currentTemperature = currentTemperature.toDoubleOrNull() ?: 0.0,
+                            setTemperature = setTemperature.toDoubleOrNull() ?: 0.0,
+                            optimalTemperatureMin = optimalMin.toDoubleOrNull() ?: 0.0,
+                            optimalTemperatureMax = optimalMax.toDoubleOrNull() ?: 0.0,
+                            locationName = locationName,
+                            locationAddress = locationAddress,
+                            locationLatitude = latitude.toDoubleOrNull(),
+                            locationLongitude = longitude.toDoubleOrNull(),
+                            energyConsumptionCurrent = energyConsumptionCurrent.toDoubleOrNull() ?: 0.0,
+                            energyConsumptionUnit = energyConsumptionUnit,
+                            energyConsumptionAverage = energyConsumptionAverage.toDoubleOrNull() ?: 0.0,
+                            isPoweredOn = isPoweredOn,
+                            status = when (status) {
+                                "Inactive" -> com.example.ositopolarapp.features.equipment.domain.model.EquipmentStatus.INACTIVE
+                                "Maintenance" -> com.example.ositopolarapp.features.equipment.domain.model.EquipmentStatus.MAINTENANCE
+                                "Retired" -> com.example.ositopolarapp.features.equipment.domain.model.EquipmentStatus.RETIRED
+                                else -> com.example.ositopolarapp.features.equipment.domain.model.EquipmentStatus.ACTIVE
+                            },
+                            ownerId = ownerId,
+                            ownerType = "User",
+                            ownershipType = com.example.ositopolarapp.features.equipment.domain.model.OwnershipType.OWNED
+                        )
+
+                        viewModel.createEquipment(equipment)
                     } else {
                         Toast.makeText(
                             context,
@@ -410,9 +461,17 @@ fun AddEquipmentScreen(
                         ).show()
                     }
                 },
+                enabled = !uiState.isCreating,
                 modifier = Modifier.fillMaxWidth().height(56.dp)
             ) {
-                Text("Agregar Equipo", style = MaterialTheme.typography.titleMedium)
+                if (uiState.isCreating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Agregar Equipo", style = MaterialTheme.typography.titleMedium)
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
