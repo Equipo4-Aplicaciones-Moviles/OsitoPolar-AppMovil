@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.ositopolarapp.features.authentication.domain.model.AuthenticatedUserEntity
 import com.example.ositopolarapp.features.authentication.domain.usecase.CheckAuthUseCase
 import com.example.ositopolarapp.features.authentication.domain.usecase.GetCurrentUserUseCase
+import com.example.ositopolarapp.features.authentication.domain.usecase.LogoutUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +22,8 @@ sealed interface AuthState {
 
 class MainViewModel(
     private val checkAuthUseCase: CheckAuthUseCase,
-    private val getCurrentUserUseCase: GetCurrentUserUseCase
+    private val getCurrentUserUseCase: GetCurrentUserUseCase,
+    private val logoutUseCase: LogoutUseCase
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
@@ -54,6 +56,14 @@ class MainViewModel(
             getCurrentUserUseCase().collect { user ->
                 _currentUser.value = user
             }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            logoutUseCase()
+            // No need to manually update authState - it will automatically
+            // update via the Flow from Room when the token is deleted
         }
     }
 }
