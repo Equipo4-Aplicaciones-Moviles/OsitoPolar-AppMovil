@@ -15,7 +15,7 @@ interface AuthApiService {
      * Paso 1: Crea la sesión de checkout en Stripe.
      * Corresponde a tu `createRegistrationCheckout`
      */
-    @POST("/api/v1/authentication/create-registration-checkout")
+    @POST("authentication/create-registration-checkout")
     suspend fun createRegistrationCheckout(
         @Body request: CreateRegistrationCheckoutRequest
     ): Response<RegistrationCheckoutResponse> // Devuelve la URL y el
@@ -24,17 +24,17 @@ interface AuthApiService {
      * Paso 2: Completa el registro después del pago.
      * Corresponde a tu `completeRegistration`
      */
-    @POST("/api/v1/authentication/complete-registration")
+    @POST("authentication/complete-registration")
     suspend fun completeRegistration(
         @Body request: CompleteRegistrationRequest
     ): Response<Unit> // No devuelve nada, solo un 200 OK
 
-    @POST("/api/v1/authentication/sign-in")
+    @POST("authentication/sign-in")
     suspend fun signIn(
         @Body request: SignInRequest
     ): Response<SignInResponse>
 
-    @POST("/api/v1/authentication/verify-2fa")
+    @POST("authentication/verify-2fa")
     suspend fun verifyTwoFactor(
         @Body request: Verify2FARequest
     ): Response<SignInResponse>

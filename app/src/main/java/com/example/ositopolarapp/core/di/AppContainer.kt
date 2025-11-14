@@ -25,6 +25,8 @@ import android.content.Context // Importar
 import android.content.SharedPreferences // Importar
 import android.content.Context.MODE_PRIVATE
 import com.example.ositopolarapp.core.data.PreferencesManager
+import com.example.ositopolarapp.core.config.ApiConfig
+import java.util.concurrent.TimeUnit
 
 class AppContainer(private val context: Context) {
 
@@ -55,13 +57,16 @@ class AppContainer(private val context: Context) {
     private val httpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
+            .connectTimeout(ApiConfig.CONNECT_TIMEOUT, TimeUnit.SECONDS)
+            .readTimeout(ApiConfig.READ_TIMEOUT, TimeUnit.SECONDS)
+            .writeTimeout(ApiConfig.WRITE_TIMEOUT, TimeUnit.SECONDS)
             .build()
     }
 
     // Retrofit
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/") // Cambia esto
+            .baseUrl(ApiConfig.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .client(httpClient)
             .build()
