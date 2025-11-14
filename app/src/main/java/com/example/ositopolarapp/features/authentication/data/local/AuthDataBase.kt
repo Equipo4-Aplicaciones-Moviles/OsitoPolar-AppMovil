@@ -8,7 +8,7 @@ import androidx.room.RoomDatabase
  */
 @Database(
     entities = [AuthToken::class], // Lista de todas las tablas
-    version = 1,                  // La versión actual de la DB
+    version = 2,                  // La versión actual de la DB (incremented for schema changes)
     exportSchema = false          // No exportamos el esquema a un archivo
 )
 abstract class AuthDatabase : RoomDatabase() {

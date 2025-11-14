@@ -19,8 +19,9 @@ object ApiConfig {
      * - Emulator: "http://10.0.2.2:8080/api/v1/"
      * - Physical device on same network: "http://192.168.1.XXX:8080/api/v1/"
      * - Production: "https://api.ositopolar.com/api/v1/"
+     * - Azure Deployed: "https://ositopolar-api.grayground-d49718c1.eastus.azurecontainerapps.io/api/v1/"
      */
-    const val BASE_URL = "http://10.0.2.2:8080/api/v1/"
+    const val BASE_URL = "https://ositopolar-api.grayground-d49718c1.eastus.azurecontainerapps.io/api/v1/"
 
     /**
      * Admin Key for administrative operations
