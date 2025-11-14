@@ -16,7 +16,7 @@ interface SubscriptionApiService {
      * Endpoint: GET /api/v1/subscriptions?userType={userType}
      * @param userType Optional filter: "Owner" or "Provider"
      */
-    @GET("/api/v1/subscriptions")
+    @GET("subscriptions")
     suspend fun getAllPlans(
         @Query("userType") userType: String? = null
     ): Response<List<PlanDto>>
@@ -25,7 +25,7 @@ interface SubscriptionApiService {
      * Get subscription plan by ID.
      * Endpoint: GET /api/v1/subscriptions/{id}
      */
-    @GET("/api/v1/subscriptions/{id}")
+    @GET("subscriptions/{id}")
     suspend fun getPlanById(
         @Path("id") planId: Int
     ): Response<PlanDto>
