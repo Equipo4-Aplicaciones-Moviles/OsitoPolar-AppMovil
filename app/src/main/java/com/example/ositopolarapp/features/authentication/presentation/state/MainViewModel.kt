@@ -2,7 +2,9 @@ package com.example.ositopolarapp.features.authentication.presentation.state
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ositopolarapp.features.authentication.domain.model.AuthenticatedUserEntity
 import com.example.ositopolarapp.features.authentication.domain.usecase.CheckAuthUseCase
+import com.example.ositopolarapp.features.authentication.domain.usecase.GetCurrentUserUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,14 +20,19 @@ sealed interface AuthState {
 }
 
 class MainViewModel(
-    private val checkAuthUseCase: CheckAuthUseCase
+    private val checkAuthUseCase: CheckAuthUseCase,
+    private val getCurrentUserUseCase: GetCurrentUserUseCase
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
+    private val _currentUser = MutableStateFlow<AuthenticatedUserEntity?>(null)
+    val currentUser: StateFlow<AuthenticatedUserEntity?> = _currentUser.asStateFlow()
+
     init {
         checkAuthenticationStatus()
+        observeCurrentUser()
     }
 
     private fun checkAuthenticationStatus() {
@@ -38,6 +45,14 @@ class MainViewModel(
                 } else {
                     AuthState.LoggedIn
                 }
+            }
+        }
+    }
+
+    private fun observeCurrentUser() {
+        viewModelScope.launch {
+            getCurrentUserUseCase().collect { user ->
+                _currentUser.value = user
             }
         }
     }

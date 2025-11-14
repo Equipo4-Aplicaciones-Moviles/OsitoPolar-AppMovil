@@ -13,7 +13,8 @@ class MainViewModelFactory(
 
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             return MainViewModel(
-                checkAuthUseCase = container.checkAuthUseCase
+                checkAuthUseCase = container.checkAuthUseCase,
+                getCurrentUserUseCase = container.getCurrentUserUseCase
             ) as T
         }
 
