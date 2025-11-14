@@ -12,7 +12,9 @@ data class SignInResponse(
     @SerializedName("userType") val userType: String,
     @SerializedName("profileId") val profileId: Int,
 
-    // Añadimos los campos de 2FA para manejarlos después
-    @SerializedName("requiresTwoFactorSetup") val requiresTwoFactorSetup: Boolean,
-    @SerializedName("requires2FA") val requires2FA: Boolean
+    // Campos de 2FA
+    @SerializedName("requiresTwoFactorSetup") val requiresTwoFactorSetup: Boolean = false,
+    @SerializedName("requires2FA") val requires2FA: Boolean = false,
+    @SerializedName("qrCodeDataUrl") val qrCodeDataUrl: String? = null,
+    @SerializedName("manualEntryKey") val manualEntryKey: String? = null
 )
