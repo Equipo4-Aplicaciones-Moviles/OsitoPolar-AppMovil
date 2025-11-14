@@ -15,7 +15,9 @@ class MainViewModelFactory(
             return MainViewModel(
                 checkAuthUseCase = container.checkAuthUseCase,
                 getCurrentUserUseCase = container.getCurrentUserUseCase,
-                logoutUseCase = container.logoutUseCase
+                logoutUseCase = container.logoutUseCase,
+                enable2FAUseCase = container.enable2FAUseCase,
+                disable2FAUseCase = container.disable2FAUseCase
             ) as T
         }
 

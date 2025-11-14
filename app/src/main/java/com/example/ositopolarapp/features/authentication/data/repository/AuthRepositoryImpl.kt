@@ -172,5 +172,47 @@ class AuthRepositoryImpl(
         authDao.deleteToken() // Elimina todos los tokens
     }
 
+    override suspend fun enable2FA(username: String): Result<Unit> {
+        return try {
+            val request = com.example.ositopolarapp.features.authentication.data.dto.UsernameRequest(username)
+            val response = apiService.enable2FA(request)
 
+            if (response.isSuccessful) {
+                // Update local user data to reflect 2FA enabled
+                val currentToken = authDao.getTokenOnce()
+                currentToken?.let {
+                    authDao.insertToken(it.copy(requires2FA = true))
+                }
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Error al habilitar 2FA: ${response.message()}"))
+            }
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de red. Asegúrate de estar conectado."))
+        } catch (e: Exception) {
+            Result.failure(Exception("Fallo al habilitar 2FA: ${e.message}"))
+        }
+    }
+
+    override suspend fun disable2FA(username: String): Result<Unit> {
+        return try {
+            val request = com.example.ositopolarapp.features.authentication.data.dto.UsernameRequest(username)
+            val response = apiService.disable2FA(request)
+
+            if (response.isSuccessful) {
+                // Update local user data to reflect 2FA disabled
+                val currentToken = authDao.getTokenOnce()
+                currentToken?.let {
+                    authDao.insertToken(it.copy(requires2FA = false))
+                }
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Error al deshabilitar 2FA: ${response.message()}"))
+            }
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de red. Asegúrate de estar conectado."))
+        } catch (e: Exception) {
+            Result.failure(Exception("Fallo al deshabilitar 2FA: ${e.message}"))
+        }
+    }
 }

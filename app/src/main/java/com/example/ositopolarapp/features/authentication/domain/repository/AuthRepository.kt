@@ -36,5 +36,7 @@ interface AuthRepository {
         code: String
     ): Result<AuthenticatedUserEntity>
 
+    suspend fun enable2FA(username: String): Result<Unit>
 
+    suspend fun disable2FA(username: String): Result<Unit>
 }

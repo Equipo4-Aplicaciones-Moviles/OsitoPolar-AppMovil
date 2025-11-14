@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ositopolarapp.features.authentication.domain.model.AuthenticatedUserEntity
 import com.example.ositopolarapp.features.authentication.domain.usecase.CheckAuthUseCase
+import com.example.ositopolarapp.features.authentication.domain.usecase.Disable2FAUseCase
+import com.example.ositopolarapp.features.authentication.domain.usecase.Enable2FAUseCase
 import com.example.ositopolarapp.features.authentication.domain.usecase.GetCurrentUserUseCase
 import com.example.ositopolarapp.features.authentication.domain.usecase.LogoutUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +25,9 @@ sealed interface AuthState {
 class MainViewModel(
     private val checkAuthUseCase: CheckAuthUseCase,
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
-    private val logoutUseCase: LogoutUseCase
+    private val logoutUseCase: LogoutUseCase,
+    private val enable2FAUseCase: Enable2FAUseCase,
+    private val disable2FAUseCase: Disable2FAUseCase
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
@@ -65,5 +69,13 @@ class MainViewModel(
             // No need to manually update authState - it will automatically
             // update via the Flow from Room when the token is deleted
         }
+    }
+
+    suspend fun enable2FA(username: String): Result<Unit> {
+        return enable2FAUseCase(username)
+    }
+
+    suspend fun disable2FA(username: String): Result<Unit> {
+        return disable2FAUseCase(username)
     }
 }
