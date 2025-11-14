@@ -1,105 +1,85 @@
 package com.example.ositopolarapp.navigation
 
-import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
 import android.net.Uri
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.ositopolarapp.features.authentication.presentation.state.LoginViewModel
-import com.example.ositopolarapp.features.authentication.presentation.state.RegistrationViewModel
-
-// 1. Importa TODAS tus pantallas reales
-
-// 2. He borrado las pantallas temporales falsas
-//    (ClientLoginScreen y ProviderLoginScreen)
-//    que estaban aquí.
-
-/**
- * Define todas las rutas de navegación de la aplicación.
- */
-
-import androidx.compose.runtime.remember
-import androidx.lifecycle.viewmodel.compose.viewModel
-
-import com.example.ositopolarapp.core.di.AppContainer
-import com.example.ositopolarapp.core.di.AuthViewModelFactory
-
-import com.example.ositopolarapp.features.authentication.presentation.screens.ClientLoginScreen
+import com.example.ositopolarapp.core.di.*
 import com.example.ositopolarapp.features.authentication.presentation.screens.LoginScreen
 import com.example.ositopolarapp.features.authentication.presentation.screens.RegistrationScreen
+import com.example.ositopolarapp.features.authentication.presentation.state.*
+
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.fillMaxSize
 
 @Composable
-fun AppNavigation(appContainer: AppContainer,deepLinkUri: Uri?) {
+fun AppNavigation(
+    appContainer: AppContainer,
+    deepLinkUri: Uri?,
+    onDeepLinkProcessed: () -> Unit
+) {
 
-
-    // 1. El controlador que maneja las rutas de navegación
     val navController = rememberNavController()
 
-    // 2. ¡Nuestra DI! Creamos el contenedor y la fábrica
-    // 'remember' es clave para que no se re-creen en cada recomposición
-    //val appContainer = remember { AppContainer() }
-    val authViewModelFactory = remember { AuthViewModelFactory(appContainer) }
+    val mainFactory = remember { MainViewModelFactory(appContainer) }
+    val regFactory = remember { RegistrationViewModelFactory(appContainer) }
+    val authFactory = remember { AuthViewModelFactory(appContainer) }
 
-    // 3. El NavHost que define todas las rutas (pantallas)
-    // Empezamos en la ruta "login"
-    NavHost(navController = navController, startDestination = "login") {
+    val mainVM = viewModel<MainViewModel>(factory = mainFactory)
+    val authState by mainVM.authState.collectAsState()
 
-        /**
-         * Ruta para la Pantalla de Login
-         */
-        composable(route = "login") {
-            // Verás error aquí hasta que creemos LoginScreen.kt
+    val startDestination = when (authState) {
+        AuthState.Loading -> ""
+        AuthState.LoggedIn -> "dashboard"
+        AuthState.LoggedOut -> "login"
+    }
+
+    if (authState == AuthState.Loading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    NavHost(navController = navController, startDestination = startDestination) {
+
+        composable("login") {
             LoginScreen(
-                // ¡Así le pasamos la factory!
-                viewModel = viewModel(factory = authViewModelFactory),
-
-                // Definimos qué hacer en cada acción
+                viewModel = viewModel(factory = authFactory),
                 onLoginSuccess = {
-                    // Cuando el login sea exitoso, ir al "dashboard"
                     navController.navigate("dashboard") {
-                        // Borra "login" de la pila para que no pueda volver
                         popUpTo("login") { inclusive = true }
                     }
                 },
-                onGoToRegister = {
-                    // Ir a la pantalla de registro
-                    // Pasamos un ID de plan de ejemplo
-                    navController.navigate("register/1")
-                }
+                onGoToRegister = { navController.navigate("register/1") }
             )
         }
 
-        /**
-         * Ruta para la Pantalla de Registro
-         */
-        composable(route = "register/{planId}") { backStackEntry ->
-            val planId = backStackEntry.arguments?.getString("planId")?.toIntOrNull() ?: 1
+        composable("register/{planId}") { entry ->
+            val planId = entry.arguments?.getString("planId")?.toIntOrNull() ?: 1
 
             RegistrationScreen(
-                // ¡Le pasamos la misma factory!
-                // AHORA: Especificamos que debe crear un RegistrationViewModel.
-                viewModel = viewModel(
-                    modelClass = RegistrationViewModel::class.java, // <-- ¡Solución aquí!
-                    factory = authViewModelFactory
-                ),
+                viewModel = viewModel(factory = regFactory),
                 planId = planId,
                 userType = "Owner",
-                deepLinkUri = deepLinkUri,// O pasarlo como argumento
+                deepLinkUri = deepLinkUri,
                 onRegistrationSuccess = {
-                    // Cuando el registro termine, ir al login
                     navController.navigate("login") {
                         popUpTo("login") { inclusive = true }
                     }
-                }
+                },
+                onDeepLinkProcessed = onDeepLinkProcessed
             )
         }
 
-        /**
-         * Ruta para el Dashboard (aún no existe)
-         */
-        composable(route = "dashboard") {
-            // Aquí iría tu DashboardScreen()
-            // Por ahora, puedes poner un Text("¡Logueado!")
+        composable("dashboard") {
+            Text("¡Dashboard!", modifier = Modifier.fillMaxSize())
         }
     }
 }

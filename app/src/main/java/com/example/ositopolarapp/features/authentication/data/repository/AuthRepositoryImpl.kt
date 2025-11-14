@@ -1,5 +1,6 @@
 // feature/registration/data/repository/AuthRepositoryImpl.kt
 package com.example.ositopolarapp.features.authentication.data.repository
+import android.util.Log
 import com.example.ositopolarapp.features.authentication.data.api.AuthApiService
 import com.example.ositopolarapp.features.authentication.data.dto.CreateRegistrationCheckoutRequest
 import com.example.ositopolarapp.features.authentication.data.dto.CompleteRegistrationRequest
@@ -66,8 +67,11 @@ class AuthRepositoryImpl(
         return try {
             val response = apiService.completeRegistration(request)
             if (response.isSuccessful) {
+                (Log.i("AuthService", "Registro completado..."))
                 Result.success(Unit)
             } else {
+                println("AuthService Error: Fallo en el registro. Código HTTP: ${response.code()}")
+                println("AuthService Error Body: ${response.errorBody()?.string()}")
                 Result.failure(Exception("Error: ${response.message()}"))
             }
         } catch (e: Exception) {

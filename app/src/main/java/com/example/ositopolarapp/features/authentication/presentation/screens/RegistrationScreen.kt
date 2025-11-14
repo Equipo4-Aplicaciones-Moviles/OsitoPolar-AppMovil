@@ -2,6 +2,7 @@ package com.example.ositopolarapp.features.authentication.presentation.screens
 
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -9,34 +10,30 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveable // Importar para guardar estado en rotación
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-// Eliminamos el import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ositopolarapp.features.authentication.data.dto.CompleteRegistrationRequest
 import com.example.ositopolarapp.features.authentication.presentation.state.RegistrationViewModel
 
-/**
- * Pantalla de registro.
- * Recibe el ViewModel inyectado por la AuthViewModelFactory.
- */
 @Composable
 fun RegistrationScreen(
-    // 1. ELIMINAMOS la inicialización local y SOLO lo RECIBIMOS.
     viewModel: RegistrationViewModel,
     planId: Int,
     userType: String,
-    deepLinkUri: Uri?, // Parámetro para manejar el regreso del pago
-    onRegistrationSuccess: () -> Unit // Para navegar al login
+    deepLinkUri: Uri?,
+    onRegistrationSuccess: () -> Unit,
+    onDeepLinkProcessed: () -> Unit
 ) {
     // --- ViewModel y Estado de la UI ---
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    var deepLinkHandled by rememberSaveable { mutableStateOf(false) }
 
-    // --- Estado para todos los campos del formulario ---
+    // 🛑 1. ESTADO LOCAL DEL FORMULARIO (Usando rememberSaveable para persistencia)
     var username by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
     var firstName by rememberSaveable { mutableStateOf("") }
@@ -51,164 +48,98 @@ fun RegistrationScreen(
 
     // --- Manejo de Efectos (Reacciones al Estado) ---
 
-    // 1. Reacciona cuando la 'checkoutUrl' aparece (Abrir Navegador)
+    // 2. Reacciona al checkoutUrl (Abrir Navegador)
     LaunchedEffect(uiState.checkoutUrl) {
-        uiState.checkoutUrl?.let { url ->
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
+        val url = uiState.checkoutUrl
+        if (url != null) {
             try {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(intent)
-                // Es importante limpiar la URL después de usarla para evitar reejecuciones
-                // (Aunque la lógica de limpieza la manejamos mejor en el ViewModel o MainActivity,
-                // la acción de abrir el navegador es la principal aquí).
+            } finally {
                 viewModel.clearCheckoutUrl()
-            } catch (e: Exception) {
-                Toast.makeText(context, "No se puede abrir el navegador: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    // 2. Reacciona al Deep Link (Paso 2: Completar Registro)
+    // 3. Reacciona al Deep Link (Paso 2: Completar Registro)
     LaunchedEffect(deepLinkUri) {
-        deepLinkUri?.let { uri ->
-            // El Deep Link esperado es ositopolar://registration/success?session_id=...
-            if (uri.path == "/success") {
-                val sessionId = uri.getQueryParameter("session_id")
+        if (deepLinkUri != null && !deepLinkHandled) {
 
-                if (sessionId != null) {
-                    // Llama al ViewModel para completar el registro (Paso 2)
+            deepLinkHandled = true
+
+            try {
+                val sessionId = deepLinkUri.getQueryParameter("session_id")
+                if (deepLinkUri.path == "/success" && sessionId != null) {
                     viewModel.completeRegistration(sessionId)
-                } else {
-                    Toast.makeText(context, "Error: Sesión de pago inválida.", Toast.LENGTH_LONG).show()
                 }
-            } else if (uri.path == "/cancel") {
-                Toast.makeText(context, "Pago cancelado. Intenta de nuevo.", Toast.LENGTH_LONG).show()
+            } finally {
+                onDeepLinkProcessed()
             }
-            // Después de procesar, la Activity debería limpiar el URI para que este efecto no se repita
-            // (Esta limpieza ocurre en tu MainActivity, pero aquí manejamos el proceso).
         }
     }
 
-    // 3. Reacciona cuando el registro se completa con éxito
+    // 4. Reacciona al Éxito del Registro
     LaunchedEffect(uiState.registrationComplete) {
         if (uiState.registrationComplete) {
-            Toast.makeText(context, "¡Registro Exitoso! Puedes iniciar sesión.", Toast.LENGTH_LONG).show()
-            onRegistrationSuccess() // Navega a la pantalla de Login
+            Toast.makeText(context, "Registro completado", Toast.LENGTH_LONG).show()
+            onRegistrationSuccess()
         }
     }
 
-    // 4. Reacciona si hay un error
     LaunchedEffect(uiState.error) {
-        uiState.error?.let { errorMsg ->
-            Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+        uiState.error?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
         }
     }
 
 
-    // --- UI (El Formulario) ---
+    // --- UI (El Formulario COMPLETO) ---
     Box(modifier = Modifier.fillMaxSize()) {
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()) // Permite scroll
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Crear Cuenta ($userType)", style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(16.dp))
 
-            // --- Campos del Formulario (Usando rememberSaveable) ---
-            OutlinedTextField(
-                value = username,
-                onValueChange = { username = it },
-                label = { Text("Nombre de Usuario") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            // 🛑 CAMPOS DE INFORMACIÓN PERSONAL
+            OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Nombre de Usuario") }, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                modifier = Modifier.fillMaxWidth()
-            )
-            // ... (Campos firstName, lastName, Dirección, Compañía...)
+            OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
-                value = firstName,
-                onValueChange = { firstName = it },
-                label = { Text("Nombre") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            OutlinedTextField(value = firstName, onValueChange = { firstName = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
-                value = lastName,
-                onValueChange = { lastName = it },
-                label = { Text("Apellido") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            OutlinedTextField(value = lastName, onValueChange = { lastName = it }, label = { Text("Apellido") }, modifier = Modifier.fillMaxWidth())
 
-            // --- Campos de Dirección ---
+            // 🛑 CAMPOS DE DIRECCIÓN
             Spacer(Modifier.height(16.dp))
             Text("Dirección", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
 
-            OutlinedTextField(
-                value = street,
-                onValueChange = { street = it },
-                label = { Text("Calle") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            OutlinedTextField(value = street, onValueChange = { street = it }, label = { Text("Calle") }, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
-                value = number,
-                onValueChange = { number = it },
-                label = { Text("Número") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            OutlinedTextField(value = number, onValueChange = { number = it }, label = { Text("Número") }, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
-                value = city,
-                onValueChange = { city = it },
-                label = { Text("Ciudad") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text("Ciudad") }, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
-                value = postalCode,
-                onValueChange = { postalCode = it },
-                label = { Text("Código Postal") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            OutlinedTextField(value = postalCode, onValueChange = { postalCode = it }, label = { Text("Código Postal") }, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
-                value = country,
-                onValueChange = { country = it },
-                label = { Text("País") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            OutlinedTextField(value = country, onValueChange = { country = it }, label = { Text("País") }, modifier = Modifier.fillMaxWidth())
 
-            // --- Campos Opcionales de Proveedor ---
+            // 🛑 CAMPOS DE PROVEEDOR (Conditional)
             if (userType == "Provider") {
                 Spacer(Modifier.height(16.dp))
                 Text("Información de la Compañía", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
 
-                OutlinedTextField(
-                    value = companyName,
-                    onValueChange = { companyName = it },
-                    label = { Text("Nombre de la Compañía (Requerido)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                OutlinedTextField(value = companyName, onValueChange = { companyName = it }, label = { Text("Nombre de la Compañía (Requerido)") }, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = taxId,
-                    onValueChange = { taxId = it },
-                    label = { Text("Tax ID (Opcional)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                OutlinedTextField(value = taxId, onValueChange = { taxId = it }, label = { Text("Tax ID (Opcional)") }, modifier = Modifier.fillMaxWidth())
             }
 
             Spacer(Modifier.height(24.dp))
@@ -216,34 +147,21 @@ fun RegistrationScreen(
             // --- Botón de Envío ---
             Button(
                 onClick = {
-                    // 1. Validación básica de campos
                     if (username.isBlank() || email.isBlank() || firstName.isBlank() || lastName.isBlank()) {
                         Toast.makeText(context, "Completa los campos de nombre y email.", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
 
-                    // 2. Crear el objeto de datos del formulario
+                    // 🛑 CONSTRUCCIÓN FINAL DEL REQUEST
                     val formData = CompleteRegistrationRequest(
-                        sessionId = "",
-                        username = username,
-                        email = email,
-                        firstName = firstName,
-                        lastName = lastName,
-                        street = street,
-                        number = number,
-                        city = city,
-                        postalCode = postalCode,
-                        country = country,
+                        sessionId = "", // Vacío para el Paso 1
+                        username = username, email = email, firstName = firstName, lastName = lastName,
+                        street = street, number = number, city = city, postalCode = postalCode, country = country,
                         companyName = if (userType == "Provider") companyName else null,
                         taxId = if (userType == "Provider") taxId else null
                     )
 
-                    // 3. Llamar al ViewModel (Paso 1: Crear Checkout)
-                    viewModel.createCheckout(
-                        planId = planId,
-                        userType = userType,
-                        formData = formData
-                    )
+                    viewModel.createCheckout(planId = planId, userType = userType, formData = formData)
                 },
                 enabled = !uiState.isLoading,
                 modifier = Modifier
@@ -258,9 +176,7 @@ fun RegistrationScreen(
         if (uiState.isLoading) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .matchParentSize()
+                modifier = Modifier.fillMaxSize().matchParentSize()
             ) {
                 CircularProgressIndicator()
             }

@@ -21,7 +21,8 @@ class AuthViewModelFactory(
         if (modelClass.isAssignableFrom(RegistrationViewModel::class.java)) {
             return RegistrationViewModel(
                 createRegistrationCheckoutUseCase = container.createRegistrationCheckoutUseCase,
-                completeRegistrationUseCase = container.completeRegistrationUseCase
+                completeRegistrationUseCase = container.completeRegistrationUseCase,
+                prefs= container.sharedPreferences
             ) as T
         }
 

@@ -10,9 +10,14 @@ import okhttp3.Response
  * Interceptor de OkHttp que adjunta el token JWT (Bearer Token)
  * a todas las solicitudes autenticadas.
  */
-class AuthInterceptor(
-    private val authRepository: AuthRepository // Recibe la dependencia
-) : Interceptor {
+class AuthInterceptor( ) : Interceptor {
+
+    private lateinit var authRepository: AuthRepository
+
+    // 2. CREAMOS UNA FUNCIÓN PARA INYECTAR EL REPOSITORIO DESPUÉS
+    fun setAuthRepository(repository: AuthRepository) {
+        authRepository = repository
+    }
 
     override fun intercept(chain: Interceptor.Chain): Response {
 

@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.okhttp)                     // <-- AÑADE ESTA LÍNEA
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     val room_version = "2.6.1" // Puedes verificar la última versión
     implementation("androidx.room:room-runtime:$room_version")

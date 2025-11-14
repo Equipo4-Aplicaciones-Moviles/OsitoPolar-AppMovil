@@ -9,56 +9,70 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-// 1. Importa tu nuevo navegador
 import com.example.ositopolarapp.navigation.AppNavigation
 import com.example.ositopolarapp.ui.theme.OsitoPolarAppTheme
-
 import com.example.ositopolarapp.core.di.AppContainer
-import com.example.ositopolarapp.core.di.AuthViewModelFactory
-
-import com.example.ositopolarapp.features.authentication.presentation.screens.LoginScreen
-import com.example.ositopolarapp.features.authentication.presentation.screens.RegistrationScreen
 
 class MainActivity : ComponentActivity() {
 
-    val appContainer by lazy { AppContainer(applicationContext) }
+    // 🔹 Obtenemos el contenedor global desde OsitoPolarApplication (Patrón Singleton Seguro)
+    private val appContainer: AppContainer
+        get() = (application as OsitoPolarApplication).appContainer
+
+    // Estado para manejar el deep link recibido
     private var deepLinkUri = mutableStateOf<Uri?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 1. Manejar el Intent inicial (si la app estaba cerrada)
+        // Manejar intent inicial (deep link)
         handleIntent(intent)
 
         enableEdgeToEdge()
         setContent {
             OsitoPolarAppTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    // 2. Pasamos el estado de la URI a AppNavigation
-                    AppNavigation(appContainer = appContainer,deepLinkUri = deepLinkUri.value)
+
+                    // 1. Obtiene la referencia mutable de la URI
+                    val uriState = remember { deepLinkUri }
+
+                    // 2. Define el callback de limpieza que se pasa a AppNavigation
+                    val onDeepLinkProcessed: () -> Unit = {
+                        uriState.value = null // Limpia el estado en MainActivity
+                    }
+
+                    AppNavigation(
+                        appContainer = appContainer,
+                        deepLinkUri = uriState.value,
+                        onDeepLinkProcessed = onDeepLinkProcessed // <-- ¡Callback pasado!
+                    )
                 }
             }
         }
     }
 
-    // 3. Manejar Intentes nuevos (si la app ya estaba abierta)
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleIntent(intent)
     }
 
+    /**
+     * Procesa un intent que podría contener un deep link.
+     */
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == Intent.ACTION_VIEW) {
             val uri = intent.data
-            // Solo procesamos si la URI comienza con nuestro scheme/host
-            if (uri != null && uri.scheme == "ositopolar" && uri.host == "registration") {
-                deepLinkUri.value = uri // Almacena la URI en el estado
-                // Opcional: limpiar la URI en el intent original
+            if (uri != null &&
+                uri.scheme == "ositopolar" &&
+                uri.host == "registration"
+            ) {
+                deepLinkUri.value = uri
+
+                // Evita que el intent se procese de nuevo
                 intent.data = null
             }
         }
     }
 }
-
-// 3. Ya no necesitamos Greeting ni GreetingPreview en este archivo

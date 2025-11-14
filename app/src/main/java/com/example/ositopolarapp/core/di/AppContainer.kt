@@ -1,103 +1,80 @@
 package com.example.ositopolarapp.core.di
 
-import android.content.Context // Importar
-import androidx.room.Room // Importar
-import com.example.ositopolarapp.core.data.network.AuthInterceptor // Importar
-import com.example.ositopolarapp.features.authentication.data.api.AuthApiService
+import androidx.room.Room
+import com.example.ositopolarapp.core.data.network.AuthInterceptor
 import com.example.ositopolarapp.core.data.network.RetrofitClient
+import com.example.ositopolarapp.features.authentication.data.api.AuthApiService
 import com.example.ositopolarapp.features.authentication.data.local.AuthDatabase
 import com.example.ositopolarapp.features.authentication.data.repository.AuthRepositoryImpl
 import com.example.ositopolarapp.features.authentication.domain.repository.AuthRepository
-import com.example.ositopolarapp.features.authentication.domain.usecase.CreateRegistrationCheckoutUseCase
-import com.example.ositopolarapp.features.authentication.domain.usecase.CompleteRegistrationUseCase
-import com.example.ositopolarapp.features.authentication.domain.usecase.SignInUseCase
-import com.example.ositopolarapp.features.authentication.domain.usecase.VerifyTwoFactorUseCase
+import com.example.ositopolarapp.features.authentication.domain.usecase.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import android.content.Context // Importar
+import android.content.SharedPreferences // Importar
+import android.content.Context.MODE_PRIVATE
 
-// TODO: Importa aquí tus futuros UseCases de Login
-// import com.example.ositopolardefinitivo.feature.login.domain.usecase.SignInUseCase
-
-/**
- * Contenedor de dependencias manual.
- * Construye y provee todas las instancias que la app necesita.
- */
 class AppContainer(private val context: Context) {
 
-    // --- 1. Capa DATA (API y Repos) ---
-
-    //private val authApiService = RetrofitClient.authApiService
-
-    private val authApiService by lazy {
-        retrofit.create(AuthApiService::class.java)
+    // 🚀 Base de datos: se crea en un hilo IO
+    private val authDatabase: AuthDatabase by lazy {
+        runBlocking(Dispatchers.IO) {
+            Room.databaseBuilder(
+                context,
+                AuthDatabase::class.java,
+                "ositopolar"
+            )
+                .fallbackToDestructiveMigration()
+                .build()
+        }
     }
 
-    // Room Database
-    private val authDatabase: AuthDatabase by lazy { // <--- 2. INICIALIZA ROOM
-        Room.databaseBuilder(
-            context, // Usa el contexto recibido
-            AuthDatabase::class.java,
-            "osito_polar_db" // Nombre del archivo de la DB
-        )
-            .fallbackToDestructiveMigration() // Útil en desarrollo, la borra si hay un cambio de versión
+    private val authDao = authDatabase.authDao()
+
+    // Interceptor (sin dependencias al inicio)
+    private val authInterceptor by lazy { AuthInterceptor() }
+
+    // Cliente HTTP
+    private val httpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .addInterceptor(authInterceptor)
             .build()
     }
 
-    // Auth DAO
-    private val authDao = authDatabase.authDao()
+    // Retrofit
+    private val retrofit: Retrofit by lazy {
+        Retrofit.Builder()
+            .baseUrl("http://10.0.2.2:8080/") // Cambia esto
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(httpClient)
+            .build()
+    }
+
+    val authApiService: AuthApiService by lazy {
+        retrofit.create(AuthApiService::class.java)
+    }
+
+    // Repositorio
     val authRepository: AuthRepository by lazy {
         AuthRepositoryImpl(
             apiService = authApiService,
             authDao = authDao
         )
+    }.also {
+        authInterceptor.setAuthRepository(it.value)
     }
 
-    // --- 2. Capa DOMAIN (Use Cases) ---
+    val sharedPreferences: SharedPreferences by lazy {
+        context.getSharedPreferences("reg_cache", Context.MODE_PRIVATE)
+    }
 
-    // Use Cases de Registro
+    // Use Cases
+    val signInUseCase = SignInUseCase(authRepository)
+    val verifyTwoFactorUseCase = VerifyTwoFactorUseCase(authRepository)
+    val checkAuthUseCase = CheckAuthUseCase(authRepository)
     val createRegistrationCheckoutUseCase = CreateRegistrationCheckoutUseCase(authRepository)
     val completeRegistrationUseCase = CompleteRegistrationUseCase(authRepository)
-    val signInUseCase = SignInUseCase(authRepository)
-    // TODO: Cuando crees el SignInUseCase, añádelo aquí
-    // val signInUseCase = SignInUseCase(authRepository)
-
-    private val authInterceptor by lazy {
-        AuthInterceptor(authRepository) // Pasa el repositorio para que pueda leer el token
-    }
-
-    private val httpClient by lazy {
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
-        OkHttpClient.Builder()
-            .addInterceptor(authInterceptor) // <-- ¡ADJUNTAMOS EL INTERCEPTOR DE TOKEN!
-            .addInterceptor(loggingInterceptor)
-            .build()
-    }
-
-    private val retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080")
-            .client(httpClient) // Usamos el cliente con el Interceptor
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
-
-    val verifyTwoFactorUseCase = VerifyTwoFactorUseCase(authRepository)
-
-    // 🚀 Creamos el servicio de API
-
-
-
-
-
-
-
-
-
-
-
-
 }
