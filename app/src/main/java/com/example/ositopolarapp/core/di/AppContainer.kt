@@ -96,6 +96,8 @@ class AppContainer(private val context: Context) {
     val checkAuthUseCase = CheckAuthUseCase(authRepository)
     val getCurrentUserUseCase = GetCurrentUserUseCase(authRepository)
     val logoutUseCase = LogoutUseCase(authRepository)
+    val enable2FAUseCase = Enable2FAUseCase(authRepository)
+    val disable2FAUseCase = Disable2FAUseCase(authRepository)
     val createRegistrationCheckoutUseCase = CreateRegistrationCheckoutUseCase(authRepository)
     val completeRegistrationUseCase = CompleteRegistrationUseCase(authRepository)
 

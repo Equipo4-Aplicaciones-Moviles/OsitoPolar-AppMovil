@@ -39,5 +39,13 @@ interface AuthApiService {
         @Body request: Verify2FARequest
     ): Response<SignInResponse>
 
+    @POST("authentication/enable-2fa")
+    suspend fun enable2FA(
+        @Body request: com.example.ositopolarapp.features.authentication.data.dto.UsernameRequest
+    ): Response<Unit>
 
+    @POST("authentication/disable-2fa")
+    suspend fun disable2FA(
+        @Body request: com.example.ositopolarapp.features.authentication.data.dto.UsernameRequest
+    ): Response<Unit>
 }

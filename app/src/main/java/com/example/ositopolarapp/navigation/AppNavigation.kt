@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.launch
 import com.example.ositopolarapp.core.di.*
 import com.example.ositopolarapp.features.authentication.presentation.screens.LoginScreen
 import com.example.ositopolarapp.features.authentication.presentation.screens.RegistrationScreen
@@ -202,10 +203,24 @@ fun AppNavigation(
 
         // 2FA Settings
         composable("profile/2fa-settings") {
+            val coroutineScope = rememberCoroutineScope()
+
             com.example.ositopolarapp.features.profile.presentation.screens.TwoFactorSettingsScreen(
                 is2FAEnabled = currentUser?.requires2FA ?: false,
-                onEnable2FA = { /* TODO: Call backend */ },
-                onDisable2FA = { /* TODO: Call backend */ },
+                onEnable2FA = {
+                    coroutineScope.launch {
+                        currentUser?.username?.let { username ->
+                            mainVM.enable2FA(username)
+                        }
+                    }
+                },
+                onDisable2FA = {
+                    coroutineScope.launch {
+                        currentUser?.username?.let { username ->
+                            mainVM.disable2FA(username)
+                        }
+                    }
+                },
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -223,11 +238,16 @@ fun AppNavigation(
 
         // Service Request Wizard
         composable("service-request/create") {
-            // TODO: Pass equipment list and user ID from auth state
+            // Load equipment list for service request wizard
+            val equipmentListVM = viewModel<com.example.ositopolarapp.features.equipment.presentation.state.EquipmentListViewModel>(
+                factory = equipmentFactory
+            )
+            val equipmentUiState by equipmentListVM.uiState.collectAsState()
+
             com.example.ositopolarapp.features.servicerequests.presentation.screens.ServiceRequestWizardScreen(
                 viewModel = viewModel(factory = com.example.ositopolarapp.core.di.ServiceRequestViewModelFactory(appContainer)),
-                equipmentList = emptyList(), // TODO: Load from equipment list
-                userId = 1, // TODO: Get from auth state
+                equipmentList = equipmentUiState.equipmentList,
+                userId = currentUser?.id ?: 0,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
