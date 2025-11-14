@@ -1,14 +1,9 @@
 package com.example.ositopolarapp.features.authentication.data.api
 
-import com.example.ositopolarapp.features.authentication.data.dto.CompleteRegistrationRequest
-import com.example.ositopolarapp.features.authentication.data.dto.CreateRegistrationCheckoutRequest
-import com.example.ositopolarapp.features.authentication.data.dto.RegistrationCheckoutResponse
-import com.example.ositopolarapp.features.authentication.data.dto.SignInRequest
-import com.example.ositopolarapp.features.authentication.data.dto.SignInResponse
-import com.example.ositopolarapp.features.authentication.data.dto.Verify2FARequest
+import com.example.ositopolarapp.features.authentication.data.dto.*
 import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.POST
+import retrofit2.http.*
+
 interface AuthApiService {
 
     /**
@@ -39,13 +34,32 @@ interface AuthApiService {
         @Body request: Verify2FARequest
     ): Response<SignInResponse>
 
+    /**
+     * Initiate 2FA setup for a user
+     * Endpoint: POST /api/v1/authentication/initiate-2fa
+     */
+    @POST("authentication/initiate-2fa")
+    suspend fun initiate2FA(
+        @Body request: UsernameRequest
+    ): Response<Initiate2FAResponse>
+
+    /**
+     * Get 2FA status for a user
+     * Endpoint: GET /api/v1/authentication/2fa-status
+     * @param username User's username as query parameter
+     */
+    @GET("authentication/2fa-status")
+    suspend fun get2FAStatus(
+        @Query("username") username: String
+    ): Response<TwoFactorStatusResponse>
+
     @POST("authentication/enable-2fa")
     suspend fun enable2FA(
-        @Body request: com.example.ositopolarapp.features.authentication.data.dto.UsernameRequest
+        @Body request: UsernameRequest
     ): Response<Unit>
 
     @POST("authentication/disable-2fa")
     suspend fun disable2FA(
-        @Body request: com.example.ositopolarapp.features.authentication.data.dto.UsernameRequest
+        @Body request: UsernameRequest
     ): Response<Unit>
 }

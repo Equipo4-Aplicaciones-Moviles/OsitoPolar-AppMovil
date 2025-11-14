@@ -160,4 +160,74 @@ class AppContainer(private val context: Context) {
     val addFeedbackUseCase by lazy {
         com.example.ositopolarapp.features.servicerequests.domain.usecase.AddFeedbackUseCase(serviceRequestRepository)
     }
+
+    // ============ PAYMENTS MODULE ============
+
+    // API Service
+    val paymentApiService: com.example.ositopolarapp.features.payments.data.api.PaymentApiService by lazy {
+        retrofit.create(com.example.ositopolarapp.features.payments.data.api.PaymentApiService::class.java)
+    }
+
+    // ============ PROFILE MODULE ============
+
+    // API Service
+    val profileApiService: com.example.ositopolarapp.features.profile.data.api.ProfileApiService by lazy {
+        retrofit.create(com.example.ositopolarapp.features.profile.data.api.ProfileApiService::class.java)
+    }
+
+    // ============ ANALYTICS MODULE ============
+
+    // API Service
+    val analyticsApiService: com.example.ositopolarapp.features.analytics.data.api.AnalyticsApiService by lazy {
+        retrofit.create(com.example.ositopolarapp.features.analytics.data.api.AnalyticsApiService::class.java)
+    }
+
+    // Repository
+    val analyticsRepository: com.example.ositopolarapp.features.analytics.domain.repository.AnalyticsRepository by lazy {
+        com.example.ositopolarapp.features.analytics.data.repository.AnalyticsRepositoryImpl(
+            apiService = analyticsApiService
+        )
+    }
+
+    // ============ NOTIFICATIONS MODULE ============
+
+    // API Service
+    val notificationApiService: com.example.ositopolarapp.features.notifications.data.api.NotificationApiService by lazy {
+        retrofit.create(com.example.ositopolarapp.features.notifications.data.api.NotificationApiService::class.java)
+    }
+
+    // Repository
+    val notificationRepository: com.example.ositopolarapp.features.notifications.domain.repository.NotificationRepository by lazy {
+        com.example.ositopolarapp.features.notifications.data.repository.NotificationRepositoryImpl(
+            apiService = notificationApiService
+        )
+    }
+
+    // ============ PAYMENT HISTORY MODULE ============
+
+    // API Service
+    val paymentHistoryApiService: com.example.ositopolarapp.features.paymenthistory.data.api.PaymentHistoryApiService by lazy {
+        retrofit.create(com.example.ositopolarapp.features.paymenthistory.data.api.PaymentHistoryApiService::class.java)
+    }
+
+    // Repository
+    val paymentHistoryRepository: com.example.ositopolarapp.features.paymenthistory.domain.repository.PaymentHistoryRepository by lazy {
+        com.example.ositopolarapp.features.paymenthistory.data.repository.PaymentHistoryRepositoryImpl(
+            apiService = paymentHistoryApiService
+        )
+    }
+
+    // ============ RENTAL EQUIPMENT MODULE ============
+
+    // API Service
+    val rentalEquipmentApiService: com.example.ositopolarapp.features.rentals.data.api.RentalEquipmentApiService by lazy {
+        retrofit.create(com.example.ositopolarapp.features.rentals.data.api.RentalEquipmentApiService::class.java)
+    }
+
+    // Repository
+    val rentalEquipmentRepository: com.example.ositopolarapp.features.rentals.domain.repository.RentalEquipmentRepository by lazy {
+        com.example.ositopolarapp.features.rentals.data.repository.RentalEquipmentRepositoryImpl(
+            apiService = rentalEquipmentApiService
+        )
+    }
 }
