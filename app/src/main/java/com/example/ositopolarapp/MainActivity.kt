@@ -10,10 +10,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.example.ositopolarapp.navigation.AppNavigation
 import com.example.ositopolarapp.ui.theme.OsitoPolarAppTheme
 import com.example.ositopolarapp.core.di.AppContainer
+import com.example.ositopolarapp.core.data.PreferencesManager
 
 class MainActivity : ComponentActivity() {
 
@@ -32,7 +35,12 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            OsitoPolarAppTheme {
+            // Collect theme preference from DataStore
+            val themePreference by appContainer.preferencesManager.themePreference.collectAsState(
+                initial = PreferencesManager.THEME_SYSTEM
+            )
+
+            OsitoPolarAppTheme(themePreference = themePreference) {
                 Surface(modifier = Modifier.fillMaxSize()) {
 
                     // 1. Obtiene la referencia mutable de la URI
