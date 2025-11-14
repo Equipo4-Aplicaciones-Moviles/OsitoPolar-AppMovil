@@ -26,7 +26,11 @@ import com.example.ositopolarapp.core.di.EquipmentViewModelFactory
 @Composable
 fun OwnerDashboardScreen(
     appContainer: AppContainer,
-    navController: NavHostController
+    navController: NavHostController,
+    username: String,
+    userType: String,
+    profileId: Int,
+    requires2FA: Boolean
 ) {
     var selectedTab by remember { mutableStateOf(DashboardTab.MY_MACHINES) }
     var notificationCount by remember { mutableStateOf(3) } // TODO: Replace with real count
@@ -96,9 +100,9 @@ fun OwnerDashboardScreen(
             }
             DashboardTab.PROFILE -> {
                 com.example.ositopolarapp.features.profile.presentation.screens.ProfileScreen(
-                    username = "Usuario", // TODO: Get from auth state
-                    userType = "Owner", // TODO: Get from auth state
-                    planName = "Plan Básico", // TODO: Get from user profile
+                    username = username,
+                    userType = userType,
+                    planName = "Plan Básico", // TODO: Get from user profile API
                     onLogout = {
                         // TODO: Implement logout - clear auth and navigate to login
                         navController.navigate("welcome") {
