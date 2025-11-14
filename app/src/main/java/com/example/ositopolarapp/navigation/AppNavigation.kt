@@ -36,6 +36,7 @@ fun AppNavigation(
     val authFactory = remember { AuthViewModelFactory(appContainer) }
     val equipmentFactory = remember { EquipmentViewModelFactory(appContainer) }
     val plansFactory = remember { PlansViewModelFactory(appContainer) }
+    val analyticsFactory = remember { AnalyticsViewModelFactory(appContainer) }
 
     val mainVM = viewModel<MainViewModel>(factory = mainFactory)
     val authState by mainVM.authState.collectAsState()
@@ -108,12 +109,27 @@ fun AppNavigation(
                 planId = planId,
                 userType = "Owner",
                 deepLinkUri = deepLinkUri,
-                onRegistrationSuccess = {
-                    navController.navigate("login") {
-                        popUpTo("login") { inclusive = true }
+                onRegistrationSuccess = { username, password ->
+                    navController.navigate("generated-credentials/$username/$password") {
+                        popUpTo("register/{planId}") { inclusive = true }
                     }
                 },
                 onDeepLinkProcessed = onDeepLinkProcessed
+            )
+        }
+
+        composable("generated-credentials/{username}/{password}") { entry ->
+            val username = entry.arguments?.getString("username") ?: ""
+            val password = entry.arguments?.getString("password") ?: ""
+
+            com.example.ositopolarapp.features.authentication.presentation.screens.GeneratedCredentialsScreen(
+                username = username,
+                password = password,
+                onNavigateToLogin = {
+                    navController.navigate("login") {
+                        popUpTo("welcome") { inclusive = false }
+                    }
+                }
             )
         }
 
@@ -165,15 +181,24 @@ fun AppNavigation(
                     factory = equipmentFactory
                 )
 
+                // Analytics ViewModel
+                val analyticsViewModel = viewModel<com.example.ositopolarapp.features.analytics.presentation.state.AnalyticsViewModel>(
+                    factory = analyticsFactory
+                )
+
                 LaunchedEffect(equipmentId) {
                     equipmentViewModel.loadEquipment(equipmentId)
+                    analyticsViewModel.loadAnalytics(equipmentId)
                 }
 
-                val uiState by equipmentViewModel.uiState.collectAsState()
+                val equipmentUiState by equipmentViewModel.uiState.collectAsState()
+                val analyticsUiState by analyticsViewModel.uiState.collectAsState()
 
-                if (uiState.equipment != null) {
+                if (equipmentUiState.equipment != null) {
                     com.example.ositopolarapp.features.analytics.presentation.screens.EquipmentAnalyticsScreen(
-                        equipment = uiState.equipment!!,
+                        equipment = equipmentUiState.equipment!!,
+                        analyticsState = analyticsUiState,
+                        onRefresh = { analyticsViewModel.refresh(equipmentId) },
                         onNavigateBack = { navController.popBackStack() }
                     )
                 } else {
@@ -231,6 +256,19 @@ fun AppNavigation(
                 preferencesManager = appContainer.preferencesManager,
                 onNavigateBack = { navController.popBackStack() }
             )
+        }
+
+        // Edit Profile
+        composable("profile/edit/{profileId}") { entry ->
+            val profileId = entry.arguments?.getString("profileId")?.toIntOrNull()
+
+            if (profileId != null) {
+                com.example.ositopolarapp.features.profile.presentation.screens.UpdateProfileScreen(
+                    profileApiService = appContainer.profileApiService,
+                    profileId = profileId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
 
         // Rental Checkout

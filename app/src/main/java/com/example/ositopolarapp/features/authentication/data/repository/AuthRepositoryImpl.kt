@@ -64,18 +64,21 @@ class AuthRepositoryImpl(
 
     override suspend fun completeRegistration(
         request: CompleteRegistrationRequest
-    ): Result<Unit> {
+    ): Result<Pair<String, String>> {
         return try {
             val response = apiService.completeRegistration(request)
-            if (response.isSuccessful) {
-                (Log.i("AuthService", "Registro completado..."))
-                Result.success(Unit)
+            if (response.isSuccessful && response.body() != null) {
+                val credentials = response.body()!!
+                Log.i("AuthService", "Registro completado. Usuario: ${credentials.username}")
+                // Devuelve username y password como Pair
+                Result.success(Pair(credentials.username, credentials.password))
             } else {
                 println("AuthService Error: Fallo en el registro. Código HTTP: ${response.code()}")
                 println("AuthService Error Body: ${response.errorBody()?.string()}")
                 Result.failure(Exception("Error: ${response.message()}"))
             }
         } catch (e: Exception) {
+            Log.e("AuthService", "Exception en completeRegistration: ${e.message}", e)
             Result.failure(e)
         }
     }

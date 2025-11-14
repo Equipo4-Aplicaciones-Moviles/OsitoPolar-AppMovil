@@ -16,7 +16,7 @@ interface AuthRepository {
 
     suspend fun completeRegistration(
         request: CompleteRegistrationRequest // Pasamos el request completo
-    ): Result<Unit> // Éxito o Fracaso
+    ): Result<Pair<String, String>> // Devuelve (username, password)
 
     suspend fun signIn( // <-- ¡Debe tener "suspend"!
         username: String,

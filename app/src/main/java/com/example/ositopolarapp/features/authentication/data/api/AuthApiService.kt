@@ -18,11 +18,12 @@ interface AuthApiService {
     /**
      * Paso 2: Completa el registro después del pago.
      * Corresponde a tu `completeRegistration`
+     * Devuelve las credenciales generadas (username y password)
      */
     @POST("authentication/complete-registration")
     suspend fun completeRegistration(
         @Body request: CompleteRegistrationRequest
-    ): Response<Unit> // No devuelve nada, solo un 200 OK
+    ): Response<CompleteRegistrationResponse>
 
     @POST("authentication/sign-in")
     suspend fun signIn(
