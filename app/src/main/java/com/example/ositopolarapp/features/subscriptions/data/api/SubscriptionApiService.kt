@@ -1,10 +1,9 @@
 package com.example.ositopolarapp.features.subscriptions.data.api
 
 import com.example.ositopolarapp.features.subscriptions.data.dto.PlanDto
+import com.example.ositopolarapp.features.subscriptions.data.dto.UpgradeSubscriptionRequest
 import retrofit2.Response
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.Query
+import retrofit2.http.*
 
 /**
  * Retrofit API service for Subscription/Plan endpoints.
@@ -28,5 +27,15 @@ interface SubscriptionApiService {
     @GET("subscriptions/{id}")
     suspend fun getPlanById(
         @Path("id") planId: Int
+    ): Response<PlanDto>
+
+    /**
+     * Upgrade subscription plan.
+     * Endpoint: PATCH /api/v1/subscriptions/{id}
+     */
+    @PATCH("subscriptions/{id}")
+    suspend fun upgradeSubscription(
+        @Path("id") subscriptionId: Int,
+        @Body request: UpgradeSubscriptionRequest
     ): Response<PlanDto>
 }
