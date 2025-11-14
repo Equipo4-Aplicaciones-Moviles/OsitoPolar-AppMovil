@@ -123,7 +123,15 @@ fun AppNavigation(
                 username = currentUser?.username ?: "Usuario",
                 userType = currentUser?.userType ?: "Owner",
                 profileId = currentUser?.profileId ?: 0,
-                requires2FA = currentUser?.requires2FA ?: false
+                requires2FA = currentUser?.requires2FA ?: false,
+                onLogout = {
+                    mainVM.logout()
+                    // Navigation will be handled automatically by AuthState change
+                    // But we can also manually navigate to ensure immediate UI update
+                    navController.navigate("welcome") {
+                        popUpTo("dashboard") { inclusive = true }
+                    }
+                }
             )
         }
 

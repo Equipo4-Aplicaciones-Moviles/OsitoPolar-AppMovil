@@ -19,6 +19,7 @@ class EquipmentViewModelFactory(
             modelClass.isAssignableFrom(EquipmentListViewModel::class.java) -> {
                 EquipmentListViewModel(
                     getAllEquipmentsUseCase = container.getAllEquipmentsUseCase,
+                    createEquipmentUseCase = container.createEquipmentUseCase,
                     deleteEquipmentUseCase = container.deleteEquipmentUseCase
                 ) as T
             }

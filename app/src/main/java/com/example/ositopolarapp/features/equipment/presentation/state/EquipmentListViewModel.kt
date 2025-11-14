@@ -3,6 +3,7 @@ package com.example.ositopolarapp.features.equipment.presentation.state
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ositopolarapp.features.equipment.domain.model.Equipment
+import com.example.ositopolarapp.features.equipment.domain.usecase.CreateEquipmentUseCase
 import com.example.ositopolarapp.features.equipment.domain.usecase.DeleteEquipmentUseCase
 import com.example.ositopolarapp.features.equipment.domain.usecase.GetAllEquipmentsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,15 +23,18 @@ data class EquipmentListUiState(
     val searchQuery: String = "",
     val selectedStatus: String? = null,
     val deleteSuccess: Boolean = false,
-    val deletingEquipmentId: Int? = null
+    val deletingEquipmentId: Int? = null,
+    val createSuccess: Boolean = false,
+    val isCreating: Boolean = false
 )
 
 /**
  * ViewModel for Equipment List screen.
- * Handles fetching, filtering, and deleting equipment.
+ * Handles fetching, filtering, creating, and deleting equipment.
  */
 class EquipmentListViewModel(
     private val getAllEquipmentsUseCase: GetAllEquipmentsUseCase,
+    private val createEquipmentUseCase: CreateEquipmentUseCase,
     private val deleteEquipmentUseCase: DeleteEquipmentUseCase
 ) : ViewModel() {
 
@@ -153,6 +157,46 @@ class EquipmentListViewModel(
                     }
                 }
         }
+    }
+
+    /**
+     * Creates a new equipment.
+     */
+    fun createEquipment(equipment: Equipment) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCreating = true, error = null, createSuccess = false) }
+
+            createEquipmentUseCase(equipment)
+                .onSuccess { createdEquipment ->
+                    // Add new equipment to list
+                    val updatedList = _uiState.value.equipmentList + createdEquipment
+                    _uiState.update {
+                        it.copy(
+                            isCreating = false,
+                            equipmentList = updatedList,
+                            filteredEquipmentList = filterEquipment(updatedList, it.searchQuery, it.selectedStatus),
+                            createSuccess = true,
+                            error = null
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isCreating = false,
+                            createSuccess = false,
+                            error = error.message ?: "Failed to create equipment"
+                        )
+                    }
+                }
+        }
+    }
+
+    /**
+     * Clears the create success flag.
+     */
+    fun clearCreateSuccess() {
+        _uiState.update { it.copy(createSuccess = false) }
     }
 
     /**
