@@ -15,6 +15,7 @@ data class LoginUiState(
     val isLoading: Boolean = false,
     val loginSuccess: Boolean = false,
     val requires2FA: Boolean = false,
+    val requiresTwoFactorSetup: Boolean = false,
     val error: String? = null,
     val isVerifying2FA: Boolean = false,
     val user: AuthenticatedUserEntity? = null // Para guardar datos si pide 2FA
@@ -45,18 +46,35 @@ class LoginViewModel(
                 .onSuccess { user ->
                     // 3. Éxito
 
-                    // TODO: Manejar el 2FA
-                    if (user.requires2FA) { // Suponiendo que la entidad tiene este flag
-                        pendingUser = user // Guardamos temporalmente el usuario
-                        _uiState.update {
-                            it.copy(isLoading = false, requires2FA = true, user = user) // Transiciona a 2FA
+                    when {
+                        // First login: needs 2FA setup
+                        user.requiresTwoFactorSetup -> {
+                            pendingUser = user
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    requiresTwoFactorSetup = true,
+                                    user = user
+                                )
+                            }
                         }
-                    } else {
-                        // Login exitoso
-                        _uiState.update {
-                            it.copy(isLoading = false, loginSuccess = true, user = user)
+                        // Subsequent login: needs 2FA verification
+                        user.requires2FA -> {
+                            pendingUser = user
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    requires2FA = true,
+                                    user = user
+                                )
+                            }
                         }
-                        // TODO: Aquí también deberías guardar el token si lo haces manual en el ViewModel
+                        // No 2FA: login successful
+                        else -> {
+                            _uiState.update {
+                                it.copy(isLoading = false, loginSuccess = true, user = user)
+                            }
+                        }
                     }
                 }
                 .onFailure { error ->
@@ -102,6 +120,7 @@ class LoginViewModel(
         _uiState.update {
             it.copy(
                 requires2FA = false,
+                requiresTwoFactorSetup = false,
                 isVerifying2FA = false,
                 user = null, // Limpiamos el usuario temporal
                 error = null // Limpiamos el error
