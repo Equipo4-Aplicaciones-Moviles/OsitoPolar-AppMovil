@@ -30,7 +30,8 @@ fun OwnerDashboardScreen(
     username: String,
     userType: String,
     profileId: Int,
-    requires2FA: Boolean
+    requires2FA: Boolean,
+    onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(DashboardTab.MY_MACHINES) }
     var notificationCount by remember { mutableStateOf(3) } // TODO: Replace with real count
@@ -103,12 +104,7 @@ fun OwnerDashboardScreen(
                     username = username,
                     userType = userType,
                     planName = "Plan Básico", // TODO: Get from user profile API
-                    onLogout = {
-                        // TODO: Implement logout - clear auth and navigate to login
-                        navController.navigate("welcome") {
-                            popUpTo("dashboard") { inclusive = true }
-                        }
-                    },
+                    onLogout = onLogout,
                     onNavigateToPaymentHistory = {
                         navController.navigate("profile/payment-history")
                     },
