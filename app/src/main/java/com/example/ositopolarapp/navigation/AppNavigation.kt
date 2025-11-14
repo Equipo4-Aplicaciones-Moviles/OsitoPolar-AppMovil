@@ -12,6 +12,9 @@ import com.example.ositopolarapp.core.di.*
 import com.example.ositopolarapp.features.authentication.presentation.screens.LoginScreen
 import com.example.ositopolarapp.features.authentication.presentation.screens.RegistrationScreen
 import com.example.ositopolarapp.features.authentication.presentation.state.*
+import com.example.ositopolarapp.features.equipment.presentation.screens.EquipmentDetailScreen
+import com.example.ositopolarapp.features.equipment.presentation.screens.EquipmentListScreen
+import com.example.ositopolarapp.features.subscriptions.presentation.screens.PlansScreen
 
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.layout.Box
@@ -30,6 +33,8 @@ fun AppNavigation(
     val mainFactory = remember { MainViewModelFactory(appContainer) }
     val regFactory = remember { RegistrationViewModelFactory(appContainer) }
     val authFactory = remember { AuthViewModelFactory(appContainer) }
+    val equipmentFactory = remember { EquipmentViewModelFactory(appContainer) }
+    val plansFactory = remember { PlansViewModelFactory(appContainer) }
 
     val mainVM = viewModel<MainViewModel>(factory = mainFactory)
     val authState by mainVM.authState.collectAsState()
@@ -37,7 +42,7 @@ fun AppNavigation(
     val startDestination = when (authState) {
         AuthState.Loading -> ""
         AuthState.LoggedIn -> "dashboard"
-        AuthState.LoggedOut -> "login"
+        AuthState.LoggedOut -> "welcome"
     }
 
     if (authState == AuthState.Loading) {
@@ -49,6 +54,28 @@ fun AppNavigation(
 
     NavHost(navController = navController, startDestination = startDestination) {
 
+        composable("welcome") {
+            com.example.ositopolarapp.features.public.presentation.screens.WelcomeScreen(
+                onNavigateToLogin = {
+                    navController.navigate("login")
+                },
+                onNavigateToExplore = {
+                    navController.navigate("explore")
+                }
+            )
+        }
+
+        composable("explore") {
+            com.example.ositopolarapp.features.public.presentation.screens.ExploreHomeScreen(
+                onNavigateToLogin = {
+                    navController.navigate("login")
+                },
+                onNavigateToPlans = {
+                    navController.navigate("plans")
+                }
+            )
+        }
+
         composable("login") {
             LoginScreen(
                 viewModel = viewModel(factory = authFactory),
@@ -57,7 +84,17 @@ fun AppNavigation(
                         popUpTo("login") { inclusive = true }
                     }
                 },
-                onGoToRegister = { navController.navigate("register/1") }
+                onGoToRegister = { navController.navigate("plans") }
+            )
+        }
+
+        composable("plans") {
+            PlansScreen(
+                viewModel = viewModel(factory = plansFactory),
+                onPlanSelected = { planId, userType ->
+                    navController.navigate("register/$planId")
+                },
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -79,7 +116,107 @@ fun AppNavigation(
         }
 
         composable("dashboard") {
-            Text("¡Dashboard!", modifier = Modifier.fillMaxSize())
+            com.example.ositopolarapp.features.public.presentation.screens.OwnerDashboardScreen(
+                appContainer = appContainer,
+                navController = navController
+            )
+        }
+
+        composable("equipment/detail/{equipmentId}") { entry ->
+            val equipmentId = entry.arguments?.getString("equipmentId")?.toIntOrNull()
+
+            if (equipmentId != null) {
+                EquipmentDetailScreen(
+                    equipmentId = equipmentId,
+                    viewModel = viewModel(factory = equipmentFactory),
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToAnalytics = { id ->
+                        navController.navigate("equipment/analytics/$id")
+                    }
+                )
+            } else {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Error: ID de equipo inválido")
+                }
+            }
+        }
+
+        // Equipment Analytics
+        composable("equipment/analytics/{equipmentId}") { entry ->
+            val equipmentId = entry.arguments?.getString("equipmentId")?.toIntOrNull()
+
+            if (equipmentId != null) {
+                // Load equipment first
+                val equipmentViewModel = viewModel<com.example.ositopolarapp.features.equipment.presentation.state.EquipmentDetailViewModel>(
+                    factory = equipmentFactory
+                )
+
+                LaunchedEffect(equipmentId) {
+                    equipmentViewModel.loadEquipment(equipmentId)
+                }
+
+                val uiState by equipmentViewModel.uiState.collectAsState()
+
+                if (uiState.equipment != null) {
+                    com.example.ositopolarapp.features.analytics.presentation.screens.EquipmentAnalyticsScreen(
+                        equipment = uiState.equipment!!,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                } else {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+            }
+        }
+
+        // Add Equipment
+        composable("equipment/add") {
+            com.example.ositopolarapp.features.equipment.presentation.screens.AddEquipmentScreen(
+                viewModel = viewModel(factory = equipmentFactory),
+                ownerId = 1, // TODO: Get from auth state
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // Payment History
+        composable("profile/payment-history") {
+            com.example.ositopolarapp.features.profile.presentation.screens.PaymentHistoryScreen(
+                userType = "Owner", // TODO: Get from auth state
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // 2FA Settings
+        composable("profile/2fa-settings") {
+            com.example.ositopolarapp.features.profile.presentation.screens.TwoFactorSettingsScreen(
+                is2FAEnabled = false, // TODO: Get from auth state
+                onEnable2FA = { /* TODO: Call backend */ },
+                onDisable2FA = { /* TODO: Call backend */ },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // App Settings
+        composable("profile/settings") {
+            com.example.ositopolarapp.features.profile.presentation.screens.SettingsScreen(
+                preferencesManager = appContainer.preferencesManager,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // Rental Checkout
+        composable("rental/checkout/{equipmentId}") { /* TODO: Implement with mock rental equipment */ }
+
+        // Service Request Wizard
+        composable("service-request/create") {
+            // TODO: Pass equipment list and user ID from auth state
+            com.example.ositopolarapp.features.servicerequests.presentation.screens.ServiceRequestWizardScreen(
+                viewModel = viewModel(factory = com.example.ositopolarapp.core.di.ServiceRequestViewModelFactory(appContainer)),
+                equipmentList = emptyList(), // TODO: Load from equipment list
+                userId = 1, // TODO: Get from auth state
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

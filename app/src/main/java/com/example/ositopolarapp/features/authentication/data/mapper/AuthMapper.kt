@@ -13,6 +13,9 @@ fun SignInResponse.toEntity(): AuthenticatedUserEntity {
         token = this.token,
         userType = this.userType,
         profileId = this.profileId,
-        requires2FA = this.requires2FA
+        requires2FA = this.requires2FA,
+        requiresTwoFactorSetup = this.requiresTwoFactorSetup,
+        qrCodeDataUrl = this.qrCodeDataUrl,
+        manualEntryKey = this.manualEntryKey
     )
 }
