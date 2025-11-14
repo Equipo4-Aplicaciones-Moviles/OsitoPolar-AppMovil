@@ -11,6 +11,7 @@ import com.example.ositopolarapp.features.authentication.domain.repository.AuthR
 import com.example.ositopolarapp.features.authentication.data.dto.Verify2FARequest
 
 import com.example.ositopolarapp.features.authentication.data.dto.SignInRequest
+import com.example.ositopolarapp.features.authentication.data.mapper.toAuthToken
 import com.example.ositopolarapp.features.authentication.data.mapper.toEntity
 import com.example.ositopolarapp.features.authentication.domain.model.AuthenticatedUserEntity
 import java.io.IOException
@@ -91,18 +92,15 @@ class AuthRepositoryImpl(
                 return Result.failure(Exception("Credenciales incorrectas o respuesta vacía."))
             }
 
-            // 🚀 LÓGICA DE PERSISTENCIA DEL TOKEN:
-            responseDto.token.let { tokenString ->
-                val authToken = AuthToken(
-                    token = tokenString,
-                    // CORRECCIÓN 2: Eliminamos la referencia a expiryTimestamp (no existe en el DTO)
-                    expiryDate = System.currentTimeMillis() + (7L * 24 * 60 * 60 * 1000)
-                )
-                authDao.insertToken(authToken) // Guarda el token en Room
-            }
+            // 🚀 LÓGICA DE PERSISTENCIA DEL TOKEN Y USER DATA:
+            val userEntity = responseDto.toEntity()
+            val authToken = userEntity.toAuthToken().copy(
+                expiryDate = System.currentTimeMillis() + (7L * 24 * 60 * 60 * 1000)
+            )
+            authDao.insertToken(authToken) // Guarda el token y datos del usuario en Room
 
             // CORRECCIÓN 3: Usamos Result.success()
-            Result.success(responseDto.toEntity())
+            Result.success(userEntity)
         } catch (e: IOException) {
             Result.failure(Exception("Error de red. Asegúrate de estar conectado."))
         } catch (e: Exception) {
@@ -123,18 +121,16 @@ class AuthRepositoryImpl(
 
             if (response.isSuccessful && responseDto != null) {
 
-                // 1. PERSISTENCIA: Si la verificación es exitosa, guardamos el token
-                responseDto.token.let { tokenString ->
-                    val authToken = AuthToken(
-                        token = tokenString,
-                        // Asumimos 7 días de validez si el backend no proporciona un timestamp de expiración
-                        expiryDate = System.currentTimeMillis() + (7L * 24 * 60 * 60 * 1000)
-                    )
-                    authDao.insertToken(authToken) // Guarda el token en Room
-                }
+                // 1. PERSISTENCIA: Si la verificación es exitosa, guardamos el token y user data
+                val userEntity = responseDto.toEntity()
+                val authToken = userEntity.toAuthToken().copy(
+                    // Asumimos 7 días de validez si el backend no proporciona un timestamp de expiración
+                    expiryDate = System.currentTimeMillis() + (7L * 24 * 60 * 60 * 1000)
+                )
+                authDao.insertToken(authToken) // Guarda el token en Room
 
                 // 2. Éxito: Devolvemos la entidad de usuario
-                Result.success(responseDto.toEntity())
+                Result.success(userEntity)
 
             } else if (response.code() == 401) {
                 // Código 401: Típicamente, credenciales inválidas (código 2FA incorrecto)
@@ -162,6 +158,13 @@ class AuthRepositoryImpl(
     override fun getSessionToken(): Flow<String?> {
         // Mapea la entidad AuthToken a solo el String del token
         return authDao.getToken().map { it?.token }
+    }
+
+    // Get current authenticated user data
+    override fun getCurrentUser(): Flow<AuthenticatedUserEntity?> {
+        return authDao.getToken().map { authToken ->
+            authToken?.toEntity()
+        }
     }
 
     // CORRECCIÓN 4: Asegúrate de que este método esté en la interfaz

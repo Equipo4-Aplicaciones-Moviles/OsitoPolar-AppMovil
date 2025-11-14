@@ -25,6 +25,9 @@ interface AuthRepository {
 
     fun getSessionToken(): Flow<String?>
 
+    // Get current authenticated user data
+    fun getCurrentUser(): Flow<AuthenticatedUserEntity?>
+
     // Para cerrar la sesión
     suspend fun signOut()
 
