@@ -105,6 +105,9 @@ fun OwnerDashboardScreen(
                     userType = userType,
                     planName = "Plan Básico", // TODO: Get from user profile API
                     onLogout = onLogout,
+                    onNavigateToEditProfile = {
+                        navController.navigate("profile/edit/$profileId")
+                    },
                     onNavigateToPaymentHistory = {
                         navController.navigate("profile/payment-history")
                     },

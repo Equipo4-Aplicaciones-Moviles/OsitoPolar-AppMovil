@@ -25,7 +25,7 @@ fun RegistrationScreen(
     planId: Int,
     userType: String,
     deepLinkUri: Uri?,
-    onRegistrationSuccess: () -> Unit,
+    onRegistrationSuccess: (username: String, password: String) -> Unit,
     onDeepLinkProcessed: () -> Unit
 ) {
     // --- ViewModel y Estado de la UI ---
@@ -81,9 +81,11 @@ fun RegistrationScreen(
 
     // 4. Reacciona al Éxito del Registro
     LaunchedEffect(uiState.registrationComplete) {
-        if (uiState.registrationComplete) {
+        if (uiState.registrationComplete &&
+            uiState.generatedUsername != null &&
+            uiState.generatedPassword != null) {
             Toast.makeText(context, "Registro completado", Toast.LENGTH_LONG).show()
-            onRegistrationSuccess()
+            onRegistrationSuccess(uiState.generatedUsername!!, uiState.generatedPassword!!)
         }
     }
 

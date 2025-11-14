@@ -1,6 +1,7 @@
 package com.example.ositopolarapp.features.profile.data.api
 
 import com.example.ositopolarapp.features.profile.data.dto.CreateProfileRequest
+import com.example.ositopolarapp.features.profile.data.dto.UpdateProfileRequest
 import com.example.ositopolarapp.features.profile.data.dto.ProfileDto
 import retrofit2.Response
 import retrofit2.http.*
@@ -39,4 +40,14 @@ interface ProfileApiService {
      */
     @GET("profiles")
     suspend fun getAllProfiles(): Response<List<ProfileDto>>
+
+    /**
+     * Update profile
+     * Endpoint: PUT /api/v1/profiles/{profileId}
+     */
+    @PUT("profiles/{profileId}")
+    suspend fun updateProfile(
+        @Path("profileId") profileId: Int,
+        @Body request: UpdateProfileRequest
+    ): Response<ProfileDto>
 }

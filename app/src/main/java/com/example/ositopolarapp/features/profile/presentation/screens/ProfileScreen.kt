@@ -30,6 +30,7 @@ fun ProfileScreen(
     userType: String,
     planName: String?,
     onLogout: () -> Unit,
+    onNavigateToEditProfile: () -> Unit = {},
     onNavigateToPaymentHistory: () -> Unit = {},
     onNavigateTo2FASettings: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
@@ -143,6 +144,30 @@ fun ProfileScreen(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
+
+            // Edit Profile
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigateToEditProfile() }
+            ) {
+                ListItem(
+                    headlineContent = { Text("Editar Perfil") },
+                    supportingContent = { Text("Actualiza tu información personal") },
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = null
+                        )
+                    },
+                    trailingContent = {
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null
+                        )
+                    }
+                )
+            }
 
             // App Settings
             Card(
