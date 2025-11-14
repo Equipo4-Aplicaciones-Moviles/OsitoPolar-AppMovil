@@ -217,7 +217,7 @@ fun CreateServiceRequestScreen(
                         viewModel.createServiceRequest(
                             title = title,
                             description = description,
-                            issueDetails = issueDetails.ifBlank { null },
+                            issueDetails = issueDetails,
                             equipmentId = equipmentId,
                             reportedByUserId = userId,
                             serviceType = serviceType,
