@@ -212,7 +212,7 @@ fun ServiceRequestWizardScreen(
                                     viewModel.createServiceRequest(
                                         title = title,
                                         description = description,
-                                        issueDetails = issueDetails.ifBlank { null },
+                                        issueDetails = issueDetails,
                                         equipmentId = selectedEquipment!!.id,
                                         reportedByUserId = userId,
                                         serviceType = serviceType,
