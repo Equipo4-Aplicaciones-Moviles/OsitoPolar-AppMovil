@@ -38,6 +38,7 @@ fun AppNavigation(
 
     val mainVM = viewModel<MainViewModel>(factory = mainFactory)
     val authState by mainVM.authState.collectAsState()
+    val currentUser by mainVM.currentUser.collectAsState()
 
     val startDestination = when (authState) {
         AuthState.Loading -> ""
@@ -118,7 +119,11 @@ fun AppNavigation(
         composable("dashboard") {
             com.example.ositopolarapp.features.public.presentation.screens.OwnerDashboardScreen(
                 appContainer = appContainer,
-                navController = navController
+                navController = navController,
+                username = currentUser?.username ?: "Usuario",
+                userType = currentUser?.userType ?: "Owner",
+                profileId = currentUser?.profileId ?: 0,
+                requires2FA = currentUser?.requires2FA ?: false
             )
         }
 
@@ -174,7 +179,7 @@ fun AppNavigation(
         composable("equipment/add") {
             com.example.ositopolarapp.features.equipment.presentation.screens.AddEquipmentScreen(
                 viewModel = viewModel(factory = equipmentFactory),
-                ownerId = 1, // TODO: Get from auth state
+                ownerId = currentUser?.id ?: 0,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -182,7 +187,7 @@ fun AppNavigation(
         // Payment History
         composable("profile/payment-history") {
             com.example.ositopolarapp.features.profile.presentation.screens.PaymentHistoryScreen(
-                userType = "Owner", // TODO: Get from auth state
+                userType = currentUser?.userType ?: "Owner",
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -190,7 +195,7 @@ fun AppNavigation(
         // 2FA Settings
         composable("profile/2fa-settings") {
             com.example.ositopolarapp.features.profile.presentation.screens.TwoFactorSettingsScreen(
-                is2FAEnabled = false, // TODO: Get from auth state
+                is2FAEnabled = currentUser?.requires2FA ?: false,
                 onEnable2FA = { /* TODO: Call backend */ },
                 onDisable2FA = { /* TODO: Call backend */ },
                 onNavigateBack = { navController.popBackStack() }
