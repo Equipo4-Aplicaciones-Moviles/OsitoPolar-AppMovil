@@ -11,6 +11,10 @@ import retrofit2.http.*
  * - GET /analytics/equipments/{id}/readings - Get equipment readings
  * - GET /analytics/equipments/{id}/summaries - Get daily summaries
  * - GET /analytics/equipments/overview - Get multi-equipment overview
+ * - GET /analytics/equipments/{id}/health - Get equipment health score
+ * - GET /analytics/equipments/{id}/anomalies - Get anomaly detection
+ * - GET /analytics/equipments/{id}/costs - Get energy cost analysis
+ * - GET /analytics/equipments/{id}/maintenance-forecast - Get maintenance forecast
  */
 interface AnalyticsApiService {
 
@@ -55,4 +59,52 @@ interface AnalyticsApiService {
         @Query("ids") ids: String,
         @Query("type") type: String = "current"
     ): Response<OverviewResponse>
+
+    /**
+     * Get equipment health score based on temperature stability
+     * Endpoint: GET /api/v1/analytics/equipments/{equipmentId}/health
+     * @param equipmentId Equipment ID
+     * @param hours Hours to analyze (default: 24)
+     */
+    @GET("analytics/equipments/{equipmentId}/health")
+    suspend fun getEquipmentHealth(
+        @Path("equipmentId") equipmentId: Int,
+        @Query("hours") hours: Int = 24
+    ): Response<HealthScoreResponse>
+
+    /**
+     * Detect temperature anomalies (door open, compressor failure, power outage)
+     * Endpoint: GET /api/v1/analytics/equipments/{equipmentId}/anomalies
+     * @param equipmentId Equipment ID
+     * @param hours Hours to analyze (default: 24)
+     */
+    @GET("analytics/equipments/{equipmentId}/anomalies")
+    suspend fun getEquipmentAnomalies(
+        @Path("equipmentId") equipmentId: Int,
+        @Query("hours") hours: Int = 24
+    ): Response<AnomaliesResponse>
+
+    /**
+     * Get energy cost analysis with previous period comparison
+     * Endpoint: GET /api/v1/analytics/equipments/{equipmentId}/costs
+     * @param equipmentId Equipment ID
+     * @param days Days to analyze (default: 30)
+     * @param costPerKwh Cost per kWh (default: 0.12)
+     */
+    @GET("analytics/equipments/{equipmentId}/costs")
+    suspend fun getEnergyCosts(
+        @Path("equipmentId") equipmentId: Int,
+        @Query("days") days: Int = 30,
+        @Query("costPerKwh") costPerKwh: Double = 0.12
+    ): Response<CostAnalysisResponse>
+
+    /**
+     * Get maintenance forecast using rule-based predictions
+     * Endpoint: GET /api/v1/analytics/equipments/{equipmentId}/maintenance-forecast
+     * @param equipmentId Equipment ID
+     */
+    @GET("analytics/equipments/{equipmentId}/maintenance-forecast")
+    suspend fun getMaintenanceForecast(
+        @Path("equipmentId") equipmentId: Int
+    ): Response<MaintenanceForecastResponse>
 }
