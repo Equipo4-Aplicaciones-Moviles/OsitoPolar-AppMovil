@@ -25,61 +25,15 @@ import com.example.ositopolarapp.features.rentals.domain.model.RentalStatus
 @Composable
 fun RentalCatalogScreen(
     onRentEquipment: (RentalEquipment) -> Unit,
+    viewModel: com.example.ositopolarapp.features.rentals.presentation.viewmodel.RentalCatalogViewModel? = null,
     modifier: Modifier = Modifier
 ) {
-    // Mock data (replace with real API call when backend is ready)
-    val rentalEquipment = remember {
-        listOf(
-            RentalEquipment(
-                id = 1,
-                name = "Refrigerador Industrial R-1000",
-                type = "Refrigerator",
-                model = "R-1000",
-                manufacturer = "ColdTech",
-                monthlyFee = 500.0,
-                description = "Refrigerador de alta capacidad para almacenamiento industrial",
-                providerId = 1,
-                providerName = "Samsung Provider",
-                isAvailable = true
-            ),
-            RentalEquipment(
-                id = 2,
-                name = "Congelador Vertical F-200",
-                type = "Freezer",
-                model = "F-200",
-                manufacturer = "FreezeMaster",
-                monthlyFee = 650.0,
-                description = "Congelador vertical con control de temperatura preciso",
-                providerId = 2,
-                providerName = "LG Provider",
-                isAvailable = true
-            ),
-            RentalEquipment(
-                id = 3,
-                name = "Cámara Fría CR-5000",
-                type = "ColdRoom",
-                model = "CR-5000",
-                manufacturer = "IndustrialCool",
-                monthlyFee = 1200.0,
-                description = "Cámara fría de gran capacidad para almacenamiento masivo",
-                providerId = 1,
-                providerName = "Samsung Provider",
-                isAvailable = true
-            ),
-            RentalEquipment(
-                id = 4,
-                name = "Refrigerador Compacto R-300",
-                type = "Refrigerator",
-                model = "R-300",
-                manufacturer = "ColdTech",
-                monthlyFee = 350.0,
-                description = "Refrigerador compacto ideal para espacios reducidos",
-                providerId = 3,
-                providerName = "Whirlpool Provider",
-                isAvailable = false
-            )
-        )
-    }
+    // Use ViewModel state if provided, otherwise fallback to mock data
+    val uiState = viewModel?.uiState?.collectAsState()?.value
+
+    val rentalEquipment = uiState?.equipment ?: emptyList()
+    val isLoading = uiState?.isLoading ?: false
+    val error = uiState?.error
 
     val availableEquipment = rentalEquipment.filter { it.isAvailable }
 
@@ -111,46 +65,87 @@ fun RentalCatalogScreen(
         },
         modifier = modifier
     ) { paddingValues ->
-        if (availableEquipment.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "🧊",
-                        style = MaterialTheme.typography.displayMedium
-                    )
-                    Text(
-                        text = "No hay equipos disponibles para rentar",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    CircularProgressIndicator()
                 }
             }
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 280.dp),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(
-                    items = availableEquipment,
-                    key = { it.id }
-                ) { equipment ->
-                    RentalEquipmentCard(
-                        equipment = equipment,
-                        onRentClick = { onRentEquipment(equipment) }
-                    )
+            error != null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Error al cargar equipos",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Text(
+                            text = error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Button(onClick = { viewModel?.loadRentalEquipment() }) {
+                            Text("Reintentar")
+                        }
+                    }
+                }
+            }
+            availableEquipment.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "🧊",
+                            style = MaterialTheme.typography.displayMedium
+                        )
+                        Text(
+                            text = "No hay equipos disponibles para rentar",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+            else -> {
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 280.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(
+                        items = availableEquipment,
+                        key = { it.id }
+                    ) { equipment ->
+                        RentalEquipmentCard(
+                            equipment = equipment,
+                            onRentClick = { onRentEquipment(equipment) }
+                        )
+                    }
                 }
             }
         }

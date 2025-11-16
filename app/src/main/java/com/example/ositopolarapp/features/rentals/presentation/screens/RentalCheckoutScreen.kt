@@ -32,6 +32,7 @@ fun RentalCheckoutScreen(
     equipment: RentalEquipment,
     onNavigateBack: () -> Unit,
     onCheckoutSuccess: () -> Unit,
+    onCreateRentalRequest: ((equipmentId: Int, months: Int) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var quantity by remember { mutableStateOf(1) }
@@ -327,7 +328,15 @@ fun RentalCheckoutScreen(
 
             // Checkout Button
             Button(
-                onClick = { showPaymentDialog = true },
+                onClick = {
+                    if (onCreateRentalRequest != null) {
+                        // Call backend to create rental request and get Stripe checkout URL
+                        onCreateRentalRequest(equipment.id, rentalMonths)
+                    } else {
+                        // Fallback to mock dialog if no callback provided
+                        showPaymentDialog = true
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 enabled = deliveryAddress.isNotBlank() && city.isNotBlank() && postalCode.isNotBlank()
             ) {
