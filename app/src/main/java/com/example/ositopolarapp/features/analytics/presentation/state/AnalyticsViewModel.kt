@@ -196,4 +196,80 @@ class AnalyticsViewModel(
     fun getEnergyReadings(): List<ReadingDto> {
         return _uiState.value.readings.filter { it.type == "energy" }
     }
+
+    // ========== ADVANCED ANALYTICS ==========
+
+    /**
+     * Load equipment health score
+     */
+    fun loadHealthScore(equipmentId: Int, hours: Int = 24) {
+        viewModelScope.launch {
+            repository.getEquipmentHealth(equipmentId, hours)
+                .onSuccess { healthScore ->
+                    Log.d(TAG, "Loaded health score: ${healthScore.healthScore} for equipment $equipmentId")
+                    _uiState.update { it.copy(healthScore = healthScore) }
+                }
+                .onFailure { error ->
+                    Log.e(TAG, "Failed to load health score: ${error.message}", error)
+                }
+        }
+    }
+
+    /**
+     * Load equipment anomalies
+     */
+    fun loadAnomalies(equipmentId: Int, hours: Int = 24) {
+        viewModelScope.launch {
+            repository.getEquipmentAnomalies(equipmentId, hours)
+                .onSuccess { anomalies ->
+                    Log.d(TAG, "Loaded ${anomalies.totalAnomalies} anomalies for equipment $equipmentId")
+                    _uiState.update { it.copy(anomalies = anomalies) }
+                }
+                .onFailure { error ->
+                    Log.e(TAG, "Failed to load anomalies: ${error.message}", error)
+                }
+        }
+    }
+
+    /**
+     * Load energy cost analysis
+     */
+    fun loadCostAnalysis(equipmentId: Int, days: Int = 30, costPerKwh: Double = 0.12) {
+        viewModelScope.launch {
+            repository.getEnergyCosts(equipmentId, days, costPerKwh)
+                .onSuccess { costAnalysis ->
+                    Log.d(TAG, "Loaded cost analysis for equipment $equipmentId")
+                    _uiState.update { it.copy(costAnalysis = costAnalysis) }
+                }
+                .onFailure { error ->
+                    Log.e(TAG, "Failed to load cost analysis: ${error.message}", error)
+                }
+        }
+    }
+
+    /**
+     * Load maintenance forecast
+     */
+    fun loadMaintenanceForecast(equipmentId: Int) {
+        viewModelScope.launch {
+            repository.getMaintenanceForecast(equipmentId)
+                .onSuccess { forecast ->
+                    Log.d(TAG, "Loaded maintenance forecast for equipment $equipmentId")
+                    _uiState.update { it.copy(maintenanceForecast = forecast) }
+                }
+                .onFailure { error ->
+                    Log.e(TAG, "Failed to load maintenance forecast: ${error.message}", error)
+                }
+        }
+    }
+
+    /**
+     * Load all advanced analytics at once
+     */
+    fun loadAdvancedAnalytics(equipmentId: Int) {
+        loadHealthScore(equipmentId)
+        loadAnomalies(equipmentId)
+        loadCostAnalysis(equipmentId)
+        loadMaintenanceForecast(equipmentId)
+    }
 }

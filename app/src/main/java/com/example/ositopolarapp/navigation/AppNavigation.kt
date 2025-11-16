@@ -359,6 +359,7 @@ fun AppNavigation(
                 LaunchedEffect(equipmentId) {
                     equipmentViewModel.loadEquipment(equipmentId)
                     analyticsViewModel.loadAnalytics(equipmentId)
+                    analyticsViewModel.loadAdvancedAnalytics(equipmentId)
                 }
 
                 val equipmentUiState by equipmentViewModel.uiState.collectAsState()
@@ -368,7 +369,10 @@ fun AppNavigation(
                     com.example.ositopolarapp.features.analytics.presentation.screens.EquipmentAnalyticsScreen(
                         equipment = equipmentUiState.equipment!!,
                         analyticsState = analyticsUiState,
-                        onRefresh = { analyticsViewModel.refresh(equipmentId) },
+                        onRefresh = {
+                            analyticsViewModel.refresh(equipmentId)
+                            analyticsViewModel.loadAdvancedAnalytics(equipmentId)
+                        },
                         onNavigateBack = { navController.popBackStack() }
                     )
                 } else {
