@@ -83,10 +83,15 @@ fun OwnerDashboardScreen(
                 )
             }
             DashboardTab.RENTALS -> {
+                val rentalViewModel = viewModel<com.example.ositopolarapp.features.rentals.presentation.viewmodel.RentalCatalogViewModel>(
+                    factory = com.example.ositopolarapp.core.di.RentalViewModelFactory(appContainer)
+                )
+
                 com.example.ositopolarapp.features.rentals.presentation.screens.RentalCatalogScreen(
                     onRentEquipment = { equipment ->
-                        // TODO: Navigate to rental checkout
+                        navController.navigate("rental/checkout/${equipment.id}")
                     },
+                    viewModel = rentalViewModel,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -116,6 +121,9 @@ fun OwnerDashboardScreen(
                     },
                     onNavigateToSettings = {
                         navController.navigate("profile/settings")
+                    },
+                    onNavigateToUpgradePlan = {
+                        navController.navigate("profile/upgrade-plan")
                     },
                     modifier = Modifier.padding(paddingValues)
                 )

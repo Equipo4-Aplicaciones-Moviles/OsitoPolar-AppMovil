@@ -25,10 +25,12 @@ fun PlanCard(
     plan: Plan,
     isSelected: Boolean = false,
     onSelect: () -> Unit,
+    enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Card(
         onClick = onSelect,
+        enabled = enabled,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
