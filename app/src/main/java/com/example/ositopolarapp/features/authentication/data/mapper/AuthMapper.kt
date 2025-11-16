@@ -14,6 +14,7 @@ fun SignInResponse.toEntity(): AuthenticatedUserEntity {
         token = this.token ?: "",
         userType = this.userType ?: "User",
         profileId = this.profileId ?: 0,
+        planId = this.planId,
         requires2FA = this.requires2FA,
         requiresTwoFactorSetup = this.requiresTwoFactorSetup,
         qrCodeDataUrl = this.qrCodeDataUrl,
@@ -32,6 +33,7 @@ fun AuthenticatedUserEntity.toAuthToken(): AuthToken {
         username = this.username,
         userType = this.userType,
         profileId = this.profileId,
+        planId = this.planId,
         requires2FA = this.requires2FA,
         requiresTwoFactorSetup = this.requiresTwoFactorSetup
     )
@@ -47,6 +49,7 @@ fun AuthToken.toEntity(): AuthenticatedUserEntity {
         token = this.token,
         userType = this.userType,
         profileId = this.profileId,
+        planId = this.planId,
         requires2FA = this.requires2FA,
         requiresTwoFactorSetup = this.requiresTwoFactorSetup,
         qrCodeDataUrl = null,

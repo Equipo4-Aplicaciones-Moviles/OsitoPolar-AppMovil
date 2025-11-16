@@ -31,6 +31,9 @@ data class AuthToken(
     @ColumnInfo(name = "profile_id")
     val profileId: Int,
 
+    @ColumnInfo(name = "plan_id")
+    val planId: Int? = null,
+
     // 4. 2FA status
     @ColumnInfo(name = "requires_2fa")
     val requires2FA: Boolean = false,

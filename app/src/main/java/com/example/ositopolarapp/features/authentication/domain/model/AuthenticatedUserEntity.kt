@@ -9,6 +9,7 @@ data class AuthenticatedUserEntity(
     val token: String,
     val userType: String,
     val profileId: Int,
+    val planId: Int? = null,
     val requires2FA: Boolean,
     val requiresTwoFactorSetup: Boolean = false,
     val qrCodeDataUrl: String? = null,
