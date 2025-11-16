@@ -240,4 +240,23 @@ class AppContainer(private val context: Context) {
             apiService = rentalEquipmentApiService
         )
     }
+
+    // Use Cases
+    val getRentalEquipmentUseCase: com.example.ositopolarapp.features.rentals.domain.usecase.GetRentalEquipmentUseCase by lazy {
+        com.example.ositopolarapp.features.rentals.domain.usecase.GetRentalEquipmentUseCase(
+            repository = rentalEquipmentRepository
+        )
+    }
+
+    val getRentalEquipmentByIdUseCase: com.example.ositopolarapp.features.rentals.domain.usecase.GetRentalEquipmentByIdUseCase by lazy {
+        com.example.ositopolarapp.features.rentals.domain.usecase.GetRentalEquipmentByIdUseCase(
+            repository = rentalEquipmentRepository
+        )
+    }
+
+    val createRentalRequestUseCase: com.example.ositopolarapp.features.rentals.domain.usecase.CreateRentalRequestUseCase by lazy {
+        com.example.ositopolarapp.features.rentals.domain.usecase.CreateRentalRequestUseCase(
+            repository = rentalEquipmentRepository
+        )
+    }
 }
