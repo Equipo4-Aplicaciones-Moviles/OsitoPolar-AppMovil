@@ -28,7 +28,13 @@ data class AnalyticsUiState(
 
     // Overview data (multi-equipment)
     val overviewEquipments: List<EquipmentOverviewDto> = emptyList(),
-    val overviewSummary: OverviewSummaryDto? = null
+    val overviewSummary: OverviewSummaryDto? = null,
+
+    // Advanced analytics
+    val healthScore: HealthScoreResponse? = null,
+    val anomalies: AnomaliesResponse? = null,
+    val costAnalysis: CostAnalysisResponse? = null,
+    val maintenanceForecast: MaintenanceForecastResponse? = null
 )
 
 /**

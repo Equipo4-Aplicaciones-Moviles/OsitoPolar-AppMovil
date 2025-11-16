@@ -96,4 +96,108 @@ class AnalyticsRepositoryImpl(
             Result.failure(e)
         }
     }
+
+    override suspend fun getEquipmentHealth(
+        equipmentId: Int,
+        hours: Int
+    ): Result<HealthScoreResponse> {
+        return try {
+            val response = apiService.getEquipmentHealth(equipmentId, hours)
+            if (response.isSuccessful && response.body() != null) {
+                Log.d(TAG, "Successfully fetched health score for equipment $equipmentId")
+                Result.success(response.body()!!)
+            } else {
+                val errorMsg = "Failed to fetch health score: ${response.message()}"
+                Log.e(TAG, errorMsg)
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: IOException) {
+            Log.e(TAG, "Network error while fetching health score", e)
+            Result.failure(Exception("Network error. Please check your connection."))
+        } catch (e: HttpException) {
+            Log.e(TAG, "HTTP error while fetching health score: ${e.code()}", e)
+            Result.failure(Exception("Server error: ${e.message()}"))
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error while fetching health score", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getEquipmentAnomalies(
+        equipmentId: Int,
+        hours: Int
+    ): Result<AnomaliesResponse> {
+        return try {
+            val response = apiService.getEquipmentAnomalies(equipmentId, hours)
+            if (response.isSuccessful && response.body() != null) {
+                Log.d(TAG, "Successfully fetched anomalies for equipment $equipmentId")
+                Result.success(response.body()!!)
+            } else {
+                val errorMsg = "Failed to fetch anomalies: ${response.message()}"
+                Log.e(TAG, errorMsg)
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: IOException) {
+            Log.e(TAG, "Network error while fetching anomalies", e)
+            Result.failure(Exception("Network error. Please check your connection."))
+        } catch (e: HttpException) {
+            Log.e(TAG, "HTTP error while fetching anomalies: ${e.code()}", e)
+            Result.failure(Exception("Server error: ${e.message()}"))
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error while fetching anomalies", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getEnergyCosts(
+        equipmentId: Int,
+        days: Int,
+        costPerKwh: Double
+    ): Result<CostAnalysisResponse> {
+        return try {
+            val response = apiService.getEnergyCosts(equipmentId, days, costPerKwh)
+            if (response.isSuccessful && response.body() != null) {
+                Log.d(TAG, "Successfully fetched energy costs for equipment $equipmentId")
+                Result.success(response.body()!!)
+            } else {
+                val errorMsg = "Failed to fetch energy costs: ${response.message()}"
+                Log.e(TAG, errorMsg)
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: IOException) {
+            Log.e(TAG, "Network error while fetching energy costs", e)
+            Result.failure(Exception("Network error. Please check your connection."))
+        } catch (e: HttpException) {
+            Log.e(TAG, "HTTP error while fetching energy costs: ${e.code()}", e)
+            Result.failure(Exception("Server error: ${e.message()}"))
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error while fetching energy costs", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getMaintenanceForecast(
+        equipmentId: Int
+    ): Result<MaintenanceForecastResponse> {
+        return try {
+            val response = apiService.getMaintenanceForecast(equipmentId)
+            if (response.isSuccessful && response.body() != null) {
+                Log.d(TAG, "Successfully fetched maintenance forecast for equipment $equipmentId")
+                Result.success(response.body()!!)
+            } else {
+                val errorMsg = "Failed to fetch maintenance forecast: ${response.message()}"
+                Log.e(TAG, errorMsg)
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: IOException) {
+            Log.e(TAG, "Network error while fetching maintenance forecast", e)
+            Result.failure(Exception("Network error. Please check your connection."))
+        } catch (e: HttpException) {
+            Log.e(TAG, "HTTP error while fetching maintenance forecast: ${e.code()}", e)
+            Result.failure(Exception("Server error: ${e.message()}"))
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error while fetching maintenance forecast", e)
+            Result.failure(e)
+        }
+    }
 }

@@ -50,6 +50,7 @@ fun AppNavigation(
     val equipmentFactory = remember { EquipmentViewModelFactory(appContainer) }
     val plansFactory = remember { PlansViewModelFactory(appContainer) }
     val analyticsFactory = remember { AnalyticsViewModelFactory(appContainer) }
+    val rentalFactory = remember { RentalViewModelFactory(appContainer) }
 
     val mainVM = viewModel<MainViewModel>(factory = mainFactory)
     val authState by mainVM.authState.collectAsState()
@@ -427,6 +428,27 @@ fun AppNavigation(
             )
         }
 
+        // Upgrade Plan
+        composable("profile/upgrade-plan") {
+            val context = androidx.compose.ui.platform.LocalContext.current
+
+            com.example.ositopolarapp.features.subscriptions.presentation.screens.UpgradePlansScreen(
+                viewModel = viewModel(factory = plansFactory),
+                currentPlanId = currentUser?.planId,
+                userType = currentUser?.userType ?: "Owner",
+                onUpgradeConfirmed = { newPlanId ->
+                    // TODO: Implement upgrade flow with Stripe payment
+                    android.widget.Toast.makeText(
+                        context,
+                        "Upgrade to plan $newPlanId - Stripe integration pending",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                    navController.popBackStack()
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
         // Edit Profile
         composable("profile/edit/{profileId}") { entry ->
             val profileId = entry.arguments?.getString("profileId")?.toIntOrNull()
@@ -441,7 +463,97 @@ fun AppNavigation(
         }
 
         // Rental Checkout
-        composable("rental/checkout/{equipmentId}") { /* TODO: Implement with mock rental equipment */ }
+        composable("rental/checkout/{equipmentId}") { entry ->
+            val equipmentId = entry.arguments?.getString("equipmentId")?.toIntOrNull()
+            val context = androidx.compose.ui.platform.LocalContext.current
+
+            if (equipmentId != null) {
+                // Fetch equipment from API
+                var equipment by remember { mutableStateOf<com.example.ositopolarapp.features.rentals.domain.model.RentalEquipment?>(null) }
+                var isLoading by remember { mutableStateOf(true) }
+                var error by remember { mutableStateOf<String?>(null) }
+
+                // Get the ViewModel for rental operations
+                val rentalViewModel = viewModel<com.example.ositopolarapp.features.rentals.presentation.viewmodel.RentalCatalogViewModel>(
+                    factory = rentalFactory
+                )
+                val rentalUiState by rentalViewModel.uiState.collectAsState()
+
+                LaunchedEffect(equipmentId) {
+                    appContainer.getRentalEquipmentByIdUseCase(equipmentId)
+                        .onSuccess { fetchedEquipment ->
+                            equipment = fetchedEquipment
+                            isLoading = false
+                        }
+                        .onFailure { exception ->
+                            error = exception.message ?: "Error al cargar equipo"
+                            isLoading = false
+                        }
+                }
+
+                // Handle Stripe checkout URL
+                LaunchedEffect(rentalUiState.checkoutUrl) {
+                    rentalUiState.checkoutUrl?.let { url ->
+                        try {
+                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                            context.startActivity(intent)
+                            rentalViewModel.clearCheckoutUrl()
+                        } catch (e: Exception) {
+                            android.util.Log.e("RentalCheckout", "Error opening Stripe checkout", e)
+                            android.widget.Toast.makeText(context, "Error al abrir checkout de pago", android.widget.Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+
+                when {
+                    isLoading -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                    error != null -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            androidx.compose.foundation.layout.Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Warning,
+                                    contentDescription = "Error",
+                                    tint = androidx.compose.material3.MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Text(
+                                    text = error ?: "Error desconocido",
+                                    color = androidx.compose.material3.MaterialTheme.colorScheme.error,
+                                    textAlign = TextAlign.Center
+                                )
+                                Button(onClick = { navController.popBackStack() }) {
+                                    Text("Volver")
+                                }
+                            }
+                        }
+                    }
+                    equipment != null -> {
+                        com.example.ositopolarapp.features.rentals.presentation.screens.RentalCheckoutScreen(
+                            equipment = equipment!!,
+                            onNavigateBack = { navController.popBackStack() },
+                            onCheckoutSuccess = {
+                                // The Stripe checkout URL will be opened automatically via LaunchedEffect above
+                            },
+                            onCreateRentalRequest = { equipmentId, months ->
+                                // Call ViewModel to create rental request and get Stripe checkout URL
+                                rentalViewModel.createRentalRequest(equipmentId, months)
+                            }
+                        )
+                    }
+                }
+            } else {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Error: ID de equipo inválido")
+                }
+            }
+        }
 
         // Service Request Wizard
         composable("service-request/create") {
