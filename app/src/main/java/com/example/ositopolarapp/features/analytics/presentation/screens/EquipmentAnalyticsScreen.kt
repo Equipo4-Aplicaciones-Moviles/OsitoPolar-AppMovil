@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.ositopolarapp.features.equipment.domain.model.Equipment
 import com.example.ositopolarapp.features.analytics.presentation.state.AnalyticsUiState
+import com.example.ositopolarapp.features.analytics.data.dto.*
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -162,6 +163,34 @@ fun EquipmentAnalyticsScreen(
 
             // Performance Insights
             PerformanceInsightsCard(equipment = equipment)
+
+            // Advanced Analytics Section
+            Text(
+                text = "Analíticas Avanzadas",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+
+            // Health Score Card
+            analyticsState.healthScore?.let { healthScore ->
+                HealthScoreCard(healthScore = healthScore)
+            }
+
+            // Anomalies Card
+            analyticsState.anomalies?.let { anomalies ->
+                AnomaliesCard(anomalies = anomalies)
+            }
+
+            // Cost Analysis Card
+            analyticsState.costAnalysis?.let { costAnalysis ->
+                CostAnalysisCard(costAnalysis = costAnalysis)
+            }
+
+            // Maintenance Forecast Card
+            analyticsState.maintenanceForecast?.let { forecast ->
+                MaintenanceForecastCard(forecast = forecast)
+            }
             }
 
             // Loading indicator
@@ -568,6 +597,552 @@ private fun PerformanceInsightsCard(equipment: Equipment) {
                 text = "• Próximo mantenimiento recomendado en 30 días",
                 style = MaterialTheme.typography.bodyMedium
             )
+        }
+    }
+}
+
+// ========== ADVANCED ANALYTICS CARDS ==========
+
+@Composable
+private fun HealthScoreCard(healthScore: HealthScoreResponse) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = when (healthScore.status) {
+                "Excellent" -> Color(0xFF4CAF50).copy(alpha = 0.1f)
+                "Good" -> Color(0xFF8BC34A).copy(alpha = 0.1f)
+                "Fair" -> Color(0xFFFFC107).copy(alpha = 0.1f)
+                "Poor" -> Color(0xFFFF9800).copy(alpha = 0.1f)
+                else -> Color(0xFFF44336).copy(alpha = 0.1f) // Critical
+            }
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Puntuación de Salud",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Surface(
+                    color = when (healthScore.status) {
+                        "Excellent" -> Color(0xFF4CAF50)
+                        "Good" -> Color(0xFF8BC34A)
+                        "Fair" -> Color(0xFFFFC107)
+                        "Poor" -> Color(0xFFFF9800)
+                        else -> Color(0xFFF44336)
+                    },
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = healthScore.status,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
+            // Health Score visual
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = String.format("%.1f", healthScore.healthScore),
+                    style = MaterialTheme.typography.displayLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = when (healthScore.status) {
+                        "Excellent" -> Color(0xFF4CAF50)
+                        "Good" -> Color(0xFF8BC34A)
+                        "Fair" -> Color(0xFFFFC107)
+                        "Poor" -> Color(0xFFFF9800)
+                        else -> Color(0xFFF44336)
+                    }
+                )
+                Text(
+                    text = " / 100",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Divider()
+
+            // Metrics
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = "Estabilidad de Temperatura",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = String.format("%.2f%%", healthScore.temperatureStability),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "Desviación Promedio",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = String.format("%.2f°C", healthScore.averageDeviation),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            // Analysis info
+            Text(
+                text = "Basado en ${healthScore.readingsCount} lecturas de las últimas ${healthScore.hoursAnalyzed}h",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun AnomaliesCard(anomalies: AnomaliesResponse) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Anomalías Detectadas",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                if (anomalies.totalAnomalies > 0) {
+                    Surface(
+                        color = Color(0xFFF44336).copy(alpha = 0.2f),
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            text = "${anomalies.totalAnomalies}",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFF44336),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+            }
+
+            if (anomalies.totalAnomalies == 0) {
+                Text(
+                    text = "✓ No se detectaron anomalías en las últimas ${anomalies.hoursAnalyzed}h",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF4CAF50)
+                )
+            } else {
+                // Show each anomaly
+                anomalies.anomaliesDetected.forEach { anomaly ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = anomaly.type,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+
+                                Surface(
+                                    color = when (anomaly.severity) {
+                                        "Critical" -> Color(0xFFF44336)
+                                        "High" -> Color(0xFFFF9800)
+                                        "Medium" -> Color(0xFFFFC107)
+                                        else -> Color(0xFF2196F3)
+                                    }.copy(alpha = 0.2f),
+                                    shape = MaterialTheme.shapes.extraSmall
+                                ) {
+                                    Text(
+                                        text = anomaly.severity,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = when (anomaly.severity) {
+                                            "Critical" -> Color(0xFFF44336)
+                                            "High" -> Color(0xFFFF9800)
+                                            "Medium" -> Color(0xFFFFC107)
+                                            else -> Color(0xFF2196F3)
+                                        },
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+
+                            Text(
+                                text = anomaly.description,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                anomaly.duration?.let {
+                                    Text(
+                                        text = "Duración: $it",
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+
+                                anomaly.temperatureChange?.let {
+                                    Text(
+                                        text = "Cambio: ${if (it > 0) "+" else ""}${String.format("%.1f°C", it)}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (it > 0) Color(0xFFF44336) else Color(0xFF2196F3)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CostAnalysisCard(costAnalysis: CostAnalysisResponse) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Análisis de Costos",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            // Current period
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Período Actual",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "$${String.format("%.2f", costAnalysis.currentPeriod.totalCost)}",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "${String.format("%.2f", costAnalysis.currentPeriod.totalEnergyKwh)} kWh",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Trend indicator
+                Surface(
+                    color = when (costAnalysis.comparison.trend) {
+                        "Decreasing" -> Color(0xFF4CAF50).copy(alpha = 0.2f)
+                        "Increasing" -> Color(0xFFF44336).copy(alpha = 0.2f)
+                        else -> Color(0xFF2196F3).copy(alpha = 0.2f)
+                    },
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = when (costAnalysis.comparison.trend) {
+                                "Decreasing" -> "↓"
+                                "Increasing" -> "↑"
+                                else -> "→"
+                            },
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = when (costAnalysis.comparison.trend) {
+                                "Decreasing" -> Color(0xFF4CAF50)
+                                "Increasing" -> Color(0xFFF44336)
+                                else -> Color(0xFF2196F3)
+                            }
+                        )
+                        Text(
+                            text = costAnalysis.comparison.trend,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = when (costAnalysis.comparison.trend) {
+                                "Decreasing" -> Color(0xFF4CAF50)
+                                "Increasing" -> Color(0xFFF44336)
+                                else -> Color(0xFF2196F3)
+                            }
+                        )
+                    }
+                }
+            }
+
+            Divider()
+
+            // Comparison with previous period
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = "Cambio en Energía",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${if (costAnalysis.comparison.energyChangePercent > 0) "+" else ""}${String.format("%.1f%%", costAnalysis.comparison.energyChangePercent)}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (costAnalysis.comparison.energyChangePercent > 0) Color(0xFFF44336) else Color(0xFF4CAF50)
+                    )
+                }
+
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "Cambio en Costo",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${if (costAnalysis.comparison.costChangePercent > 0) "+" else ""}${String.format("%.1f%%", costAnalysis.comparison.costChangePercent)}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (costAnalysis.comparison.costChangePercent > 0) Color(0xFFF44336) else Color(0xFF4CAF50)
+                    )
+                }
+            }
+
+            // Estimated monthly cost
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                shape = MaterialTheme.shapes.small
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Costo Mensual Estimado:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "$${String.format("%.2f", costAnalysis.comparison.estimatedMonthlyCost)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            // Cost per kWh info
+            Text(
+                text = "Tarifa: $${String.format("%.2f", costAnalysis.costPerKwh)}/kWh",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun MaintenanceForecastCard(forecast: MaintenanceForecastResponse) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = when (forecast.forecast.priority) {
+                "Critical" -> Color(0xFFF44336).copy(alpha = 0.1f)
+                "High" -> Color(0xFFFF9800).copy(alpha = 0.1f)
+                "Medium" -> Color(0xFFFFC107).copy(alpha = 0.1f)
+                else -> Color(0xFF4CAF50).copy(alpha = 0.1f)
+            }
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Pronóstico de Mantenimiento",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Surface(
+                    color = when (forecast.forecast.priority) {
+                        "Critical" -> Color(0xFFF44336)
+                        "High" -> Color(0xFFFF9800)
+                        "Medium" -> Color(0xFFFFC107)
+                        else -> Color(0xFF4CAF50)
+                    },
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = forecast.forecast.priority,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
+            // Next maintenance date
+            forecast.forecast.nextMaintenanceDate?.let { date ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Próximo Mantenimiento",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = date,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    forecast.forecast.daysUntilMaintenance?.let { days ->
+                        Surface(
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            shape = MaterialTheme.shapes.small
+                        ) {
+                            Text(
+                                text = "En $days días",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
+            // Confidence and basis
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = "Confianza",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = forecast.forecast.confidence,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                forecast.forecast.estimatedCost?.let { cost ->
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "Costo Estimado",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "$${String.format("%.2f", cost)}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+
+            // Based on
+            Text(
+                text = "Basado en: ${forecast.forecast.basedOn}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            // Recommendations
+            if (forecast.recommendations.isNotEmpty()) {
+                Divider()
+
+                Text(
+                    text = "Recomendaciones",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                forecast.recommendations.forEach { recommendation ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "•",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = recommendation,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
         }
     }
 }
