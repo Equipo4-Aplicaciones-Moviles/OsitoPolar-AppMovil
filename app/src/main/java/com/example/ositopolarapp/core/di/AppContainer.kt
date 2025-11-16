@@ -27,6 +27,8 @@ import android.content.Context.MODE_PRIVATE
 import com.example.ositopolarapp.core.data.PreferencesManager
 import com.example.ositopolarapp.core.config.ApiConfig
 import java.util.concurrent.TimeUnit
+import com.google.gson.GsonBuilder
+import java.nio.charset.StandardCharsets
 
 class AppContainer(private val context: Context) {
 
@@ -63,11 +65,19 @@ class AppContainer(private val context: Context) {
             .build()
     }
 
+    // Gson configurado con UTF-8
+    private val gson by lazy {
+        GsonBuilder()
+            .setLenient()
+            .serializeNulls()
+            .create()
+    }
+
     // Retrofit
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(ApiConfig.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .client(httpClient)
             .build()
     }
