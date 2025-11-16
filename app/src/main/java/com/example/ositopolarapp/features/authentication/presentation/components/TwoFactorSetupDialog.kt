@@ -196,7 +196,7 @@ fun TwoFactorSetupDialog(
                                     )
                                     IconButton(
                                         onClick = {
-                                            clipboardManager.setText(AnnotatedString(manualKey))
+                                            clipboardManager.setText(AnnotatedString(manualKey.trim()))
                                         }
                                     ) {
                                         Icon(

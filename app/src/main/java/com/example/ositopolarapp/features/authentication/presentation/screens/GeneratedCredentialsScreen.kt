@@ -155,7 +155,7 @@ fun GeneratedCredentialsScreen(
                             }
                             IconButton(
                                 onClick = {
-                                    clipboardManager.setText(AnnotatedString(username))
+                                    clipboardManager.setText(AnnotatedString(username.trim()))
                                     copied = true
                                 }
                             ) {
@@ -194,7 +194,7 @@ fun GeneratedCredentialsScreen(
                             }
                             IconButton(
                                 onClick = {
-                                    clipboardManager.setText(AnnotatedString(password))
+                                    clipboardManager.setText(AnnotatedString(password.trim()))
                                     copied = true
                                 }
                             ) {

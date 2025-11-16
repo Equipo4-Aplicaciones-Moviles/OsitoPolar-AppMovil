@@ -102,7 +102,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = { viewModel.signIn(username, password) },
+                onClick = { viewModel.signIn(username.trim(), password.trim()) },
                 enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
