@@ -44,11 +44,11 @@ fun ServiceRequestWizardScreen(
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var issueDetails by remember { mutableStateOf("") }
-    var serviceType by remember { mutableStateOf("REPAIR") }
+    var serviceType by remember { mutableStateOf("Diagnostic") }
 
     // Step 2 data
-    var priority by remember { mutableStateOf("MEDIUM") }
-    var urgency by remember { mutableStateOf("NORMAL") }
+    var priority by remember { mutableStateOf("Medium") }
+    var urgency by remember { mutableStateOf("Normal") }
     var isEmergency by remember { mutableStateOf(false) }
     var scheduledDate by remember { mutableStateOf("") }
     var timeSlot by remember { mutableStateOf("") }
@@ -147,8 +147,8 @@ fun ServiceRequestWizardScreen(
                         onEmergencyChange = {
                             isEmergency = it
                             if (it) {
-                                priority = "CRITICAL"
-                                urgency = "CRITICAL"
+                                priority = "Critical"
+                                urgency = "Emergency"
                             }
                         },
                         scheduledDate = scheduledDate,
@@ -345,11 +345,10 @@ private fun Step1Equipment(
                 onDismissRequest = { expandedServiceType = false }
             ) {
                 listOf(
-                    "DIAGNOSTIC" to "Diagnóstico",
-                    "PREVENTIVE" to "Preventivo",
-                    "REPAIR" to "Reparación",
-                    "INSTALLATION" to "Instalación",
-                    "REMOVAL" to "Remoción"
+                    "Diagnostic" to "Diagnóstico",
+                    "PreventiveMaintenance" to "Mantenimiento Preventivo",
+                    "CorrectiveMaintenance" to "Mantenimiento Correctivo",
+                    "Installation" to "Instalación"
                 ).forEach { (value, label) ->
                     DropdownMenuItem(
                         text = { Text(label) },
@@ -478,11 +477,16 @@ private fun Step2Scheduling(
                 expanded = expandedPriority,
                 onDismissRequest = { expandedPriority = false }
             ) {
-                listOf("LOW", "MEDIUM", "HIGH", "CRITICAL").forEach { p ->
+                listOf(
+                    "Low" to "Baja",
+                    "Medium" to "Media",
+                    "High" to "Alta",
+                    "Critical" to "Crítica"
+                ).forEach { (value, label) ->
                     DropdownMenuItem(
-                        text = { Text(p) },
+                        text = { Text(label) },
                         onClick = {
-                            onPriorityChange(p)
+                            onPriorityChange(value)
                             expandedPriority = false
                         }
                     )
