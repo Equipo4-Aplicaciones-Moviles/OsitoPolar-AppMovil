@@ -34,50 +34,54 @@ fun RentalCatalogScreen(
                 id = 1,
                 name = "Refrigerador Industrial R-1000",
                 type = "Refrigerator",
+                model = "R-1000",
                 manufacturer = "ColdTech",
-                monthlyPrice = 500.0,
+                monthlyFee = 500.0,
                 description = "Refrigerador de alta capacidad para almacenamiento industrial",
                 providerId = 1,
                 providerName = "Samsung Provider",
-                status = RentalStatus.AVAILABLE
+                isAvailable = true
             ),
             RentalEquipment(
                 id = 2,
                 name = "Congelador Vertical F-200",
                 type = "Freezer",
+                model = "F-200",
                 manufacturer = "FreezeMaster",
-                monthlyPrice = 650.0,
+                monthlyFee = 650.0,
                 description = "Congelador vertical con control de temperatura preciso",
                 providerId = 2,
                 providerName = "LG Provider",
-                status = RentalStatus.AVAILABLE
+                isAvailable = true
             ),
             RentalEquipment(
                 id = 3,
                 name = "Cámara Fría CR-5000",
                 type = "ColdRoom",
+                model = "CR-5000",
                 manufacturer = "IndustrialCool",
-                monthlyPrice = 1200.0,
+                monthlyFee = 1200.0,
                 description = "Cámara fría de gran capacidad para almacenamiento masivo",
                 providerId = 1,
                 providerName = "Samsung Provider",
-                status = RentalStatus.AVAILABLE
+                isAvailable = true
             ),
             RentalEquipment(
                 id = 4,
                 name = "Refrigerador Compacto R-300",
                 type = "Refrigerator",
+                model = "R-300",
                 manufacturer = "ColdTech",
-                monthlyPrice = 350.0,
+                monthlyFee = 350.0,
                 description = "Refrigerador compacto ideal para espacios reducidos",
                 providerId = 3,
                 providerName = "Whirlpool Provider",
-                status = RentalStatus.RENTED
+                isAvailable = false
             )
         )
     }
 
-    val availableEquipment = rentalEquipment.filter { it.status == RentalStatus.AVAILABLE }
+    val availableEquipment = rentalEquipment.filter { it.isAvailable }
 
     Scaffold(
         topBar = {
@@ -187,7 +191,7 @@ private fun RentalEquipmentCard(
             )
 
             Text(
-                text = equipment.description,
+                text = equipment.description ?: "Sin descripción",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2
@@ -207,7 +211,7 @@ private fun RentalEquipmentCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = equipment.providerName,
+                        text = equipment.providerName ?: "Proveedor desconocido",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold
                     )

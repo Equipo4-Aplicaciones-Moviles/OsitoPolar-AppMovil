@@ -44,7 +44,7 @@ fun RentalCheckoutScreen(
     var showPaymentDialog by remember { mutableStateOf(false) }
 
     // Calculate costs
-    val monthlySubtotal = equipment.monthlyPrice * quantity
+    val monthlySubtotal = equipment.monthlyFee * quantity
     val totalCost = monthlySubtotal * rentalMonths
     val deposit = totalCost * 0.2 // 20% deposit
     val setupFee = 50.0
@@ -284,7 +284,7 @@ fun RentalCheckoutScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     PricingRow(
-                        "Renta mensual (${equipment.monthlyPrice} × $quantity)",
+                        "Renta mensual ($${equipment.monthlyFee} × $quantity)",
                         monthlySubtotal
                     )
                     PricingRow("Duración", "$rentalMonths meses", showPrice = false)

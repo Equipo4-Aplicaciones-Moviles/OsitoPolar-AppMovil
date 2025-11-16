@@ -10,6 +10,7 @@ import retrofit2.http.*
  * Endpoints:
  * - GET /rental-equipment - Get available rental equipment catalog
  * - GET /rental-equipment/{id} - Get rental equipment details
+ * - POST /rental-equipment/request - Create rental request and get Stripe checkout URL
  */
 interface RentalEquipmentApiService {
 
@@ -28,4 +29,34 @@ interface RentalEquipmentApiService {
     suspend fun getRentalEquipmentById(
         @Path("id") equipmentId: Int
     ): Response<RentalEquipmentDto>
+
+    /**
+     * Create rental request and get Stripe checkout URL
+     * Endpoint: POST /api/v1/rental-equipment/request
+     */
+    @POST("rental-equipment/request")
+    suspend fun createRentalRequest(
+        @Body request: CreateRentalRequestDto
+    ): Response<CreateRentalResponseDto>
 }
+
+/**
+ * Request to create a rental
+ */
+data class CreateRentalRequestDto(
+    val equipmentId: Int,
+    val months: Int,
+    val successUrl: String? = null,
+    val cancelUrl: String? = null
+)
+
+/**
+ * Response from creating a rental request
+ */
+data class CreateRentalResponseDto(
+    val checkoutUrl: String,
+    val sessionId: String,
+    val totalAmount: Double,
+    val months: Int,
+    val monthlyFee: Double
+)
