@@ -9,11 +9,11 @@ import com.example.ositopolarapp.features.authentication.domain.model.Authentica
  */
 fun SignInResponse.toEntity(): AuthenticatedUserEntity {
     return AuthenticatedUserEntity(
-        id = this.id,
+        id = this.id ?: 0,
         username = this.username,
-        token = this.token,
-        userType = this.userType,
-        profileId = this.profileId,
+        token = this.token ?: "",
+        userType = this.userType ?: "User",
+        profileId = this.profileId ?: 0,
         requires2FA = this.requires2FA,
         requiresTwoFactorSetup = this.requiresTwoFactorSetup,
         qrCodeDataUrl = this.qrCodeDataUrl,

@@ -28,6 +28,15 @@ class AuthRepositoryImpl(
     private val authDao: AuthDao
 ) : AuthRepository {
 
+    private fun getDefaultErrorMessage(httpCode: Int): String {
+        return when (httpCode) {
+            400 -> "Datos inválidos o sesión de pago ya utilizada"
+            404 -> "Sesión de pago no encontrada"
+            500 -> "Error del servidor. Intenta de nuevo más tarde"
+            else -> "Error: $httpCode - Contacta soporte si el problema persiste"
+        }
+    }
+
     override suspend fun createRegistrationCheckout(
         planId: Int,
         userType: String
@@ -89,13 +98,32 @@ class AuthRepositoryImpl(
                 Log.e("AuthService", "Mensaje: ${response.message()}")
                 Log.e("AuthService", "Error Body: $errorBody")
 
-                // Provide more specific error message
-                val errorMsg = when (response.code()) {
-                    400 -> "Datos inválidos o sesión de pago ya utilizada"
-                    404 -> "Sesión de pago no encontrada"
-                    500 -> "Error del servidor. Intenta de nuevo más tarde"
-                    else -> "Error: ${response.code()} - ${response.message()}"
+                // Parse error message from backend
+                val errorMsg = try {
+                    if (errorBody != null) {
+                        // Try to parse JSON error message
+                        val jsonObject = org.json.JSONObject(errorBody)
+                        val backendMessage = jsonObject.optString("message", "")
+
+                        // Map backend error messages to user-friendly Spanish messages
+                        when {
+                            backendMessage.contains("Username already exists", ignoreCase = true) ->
+                                "Este nombre de usuario ya está registrado. Intenta con otro correo o username."
+                            backendMessage.contains("session", ignoreCase = true) ->
+                                "La sesión de pago ya fue utilizada o expiró."
+                            backendMessage.contains("Invalid", ignoreCase = true) ->
+                                "Datos inválidos: $backendMessage"
+                            backendMessage.isNotEmpty() -> backendMessage
+                            else -> getDefaultErrorMessage(response.code())
+                        }
+                    } else {
+                        getDefaultErrorMessage(response.code())
+                    }
+                } catch (e: Exception) {
+                    Log.e("AuthService", "Error parsing error body", e)
+                    getDefaultErrorMessage(response.code())
                 }
+
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: IOException) {
