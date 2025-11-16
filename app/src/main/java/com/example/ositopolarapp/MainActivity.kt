@@ -70,16 +70,27 @@ class MainActivity : ComponentActivity() {
      * Procesa un intent que podría contener un deep link.
      */
     private fun handleIntent(intent: Intent?) {
+        android.util.Log.d("MainActivity", "handleIntent called with action: ${intent?.action}")
+        android.util.Log.d("MainActivity", "Intent data: ${intent?.data}")
+
         if (intent?.action == Intent.ACTION_VIEW) {
             val uri = intent.data
+            android.util.Log.d("MainActivity", "Deep link URI received: $uri")
+
             if (uri != null &&
                 uri.scheme == "ositopolar" &&
                 uri.host == "registration"
             ) {
+                android.util.Log.d("MainActivity", "Valid registration deep link detected")
+                android.util.Log.d("MainActivity", "URI path: ${uri.path}")
+                android.util.Log.d("MainActivity", "URI query params: ${uri.query}")
+
                 deepLinkUri.value = uri
 
                 // Evita que el intent se procese de nuevo
                 intent.data = null
+            } else {
+                android.util.Log.w("MainActivity", "Deep link scheme or host mismatch. Scheme: ${uri?.scheme}, Host: ${uri?.host}")
             }
         }
     }

@@ -19,8 +19,21 @@ import com.example.ositopolarapp.features.subscriptions.presentation.screens.Pla
 
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun AppNavigation(
@@ -46,6 +59,18 @@ fun AppNavigation(
         AuthState.Loading -> ""
         AuthState.LoggedIn -> "dashboard"
         AuthState.LoggedOut -> "welcome"
+    }
+
+    // Handle deep link navigation
+    LaunchedEffect(deepLinkUri) {
+        if (deepLinkUri != null && deepLinkUri.path == "/success") {
+            android.util.Log.d("AppNavigation", "Deep link detected, navigating to registration completion")
+            // Clear the back stack and navigate to registration-complete
+            navController.navigate("registration-complete") {
+                popUpTo("welcome") { inclusive = false }
+                launchSingleTop = true
+            }
+        }
     }
 
     if (authState == AuthState.Loading) {
@@ -108,13 +133,11 @@ fun AppNavigation(
                 viewModel = viewModel(factory = regFactory),
                 planId = planId,
                 userType = "Owner",
-                deepLinkUri = deepLinkUri,
                 onRegistrationSuccess = { username, password ->
                     navController.navigate("generated-credentials/$username/$password") {
                         popUpTo("register/{planId}") { inclusive = true }
                     }
-                },
-                onDeepLinkProcessed = onDeepLinkProcessed
+                }
             )
         }
 
@@ -131,6 +154,152 @@ fun AppNavigation(
                     }
                 }
             )
+        }
+
+        // Route to handle deep link from Stripe payment success
+        composable("registration-complete") {
+            val registrationViewModel = viewModel<RegistrationViewModel>(factory = regFactory)
+            val uiState by registrationViewModel.uiState.collectAsState()
+            val context = androidx.compose.ui.platform.LocalContext.current
+
+            // Track if we've already processed this deep link
+            var hasProcessedDeepLink by remember { mutableStateOf(false) }
+
+            LaunchedEffect(deepLinkUri) {
+                if (deepLinkUri != null && deepLinkUri.path == "/success" && !hasProcessedDeepLink) {
+                    hasProcessedDeepLink = true
+                    val sessionId = deepLinkUri.getQueryParameter("session_id")
+                    android.util.Log.d("AppNavigation", "Processing registration with session_id: $sessionId")
+                    android.util.Log.d("AppNavigation", "Form data present in ViewModel: ${uiState.formData != null}")
+
+                    if (sessionId != null) {
+                        registrationViewModel.completeRegistration(sessionId)
+                        // Clear the deep link after processing
+                        onDeepLinkProcessed()
+                    } else {
+                        android.util.Log.e("AppNavigation", "session_id is null!")
+                        android.widget.Toast.makeText(context, "Error: No se encontró el ID de sesión", android.widget.Toast.LENGTH_LONG).show()
+                        onDeepLinkProcessed()
+                        // Navigate back to plans screen on error
+                        navController.navigate("plans") {
+                            popUpTo("welcome") { inclusive = false }
+                        }
+                    }
+                }
+            }
+
+            LaunchedEffect(uiState.registrationComplete) {
+                if (uiState.registrationComplete && uiState.generatedUsername != null) {
+                    android.util.Log.i("AppNavigation", "Registration complete")
+
+                    if (uiState.generatedPassword != null) {
+                        // Normal flow: show credentials screen
+                        android.util.Log.i("AppNavigation", "Navigating to credentials screen")
+                        navController.navigate("generated-credentials/${uiState.generatedUsername}/${uiState.generatedPassword}") {
+                            popUpTo("welcome") { inclusive = false }
+                        }
+                    } else {
+                        // Backend didn't return password - show error and go to login
+                        android.util.Log.e("AppNavigation", "Backend returned null password!")
+                        android.widget.Toast.makeText(
+                            context,
+                            "Registro exitoso! Usuario: ${uiState.generatedUsername}\nPor favor contacta al administrador para obtener tu contraseña.",
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
+
+                        // Navigate to login after 2 seconds
+                        kotlinx.coroutines.delay(2000)
+                        navController.navigate("login") {
+                            popUpTo("welcome") { inclusive = false }
+                        }
+                    }
+                }
+            }
+
+            LaunchedEffect(uiState.error) {
+                uiState.error?.let { error ->
+                    android.util.Log.e("AppNavigation", "Registration error: $error")
+                    android.widget.Toast.makeText(context, "Error al completar registro: $error", android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+
+            // Show loading screen while processing
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                androidx.compose.foundation.layout.Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(24.dp)
+                ) {
+                    if (uiState.error != null) {
+                        // Error State
+                        Icon(
+                            imageVector = Icons.Filled.Warning,
+                            contentDescription = "Error",
+                            tint = androidx.compose.material3.MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(64.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            "Error al completar registro",
+                            style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            uiState.error ?: "Error desconocido",
+                            style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        androidx.compose.foundation.layout.Row(
+                            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    // Retry the registration
+                                    deepLinkUri?.getQueryParameter("session_id")?.let { sessionId ->
+                                        hasProcessedDeepLink = false
+                                        registrationViewModel.completeRegistration(sessionId)
+                                    }
+                                }
+                            ) {
+                                Text("Reintentar")
+                            }
+                            OutlinedButton(
+                                onClick = {
+                                    navController.navigate("plans") {
+                                        popUpTo("welcome") { inclusive = false }
+                                    }
+                                }
+                            ) {
+                                Text("Volver a Planes")
+                            }
+                        }
+                    } else if (uiState.isLoading) {
+                        // Loading State
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            "Completando registro...",
+                            style = androidx.compose.material3.MaterialTheme.typography.headlineSmall
+                        )
+                        Text(
+                            "Por favor espera mientras procesamos tu pago",
+                            style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth(0.7f)
+                        )
+                    } else {
+                        // Initial State
+                        CircularProgressIndicator()
+                        Text("Iniciando...")
+                    }
+                }
+            }
         }
 
         composable("dashboard") {

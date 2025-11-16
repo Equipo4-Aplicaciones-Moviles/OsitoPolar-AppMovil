@@ -66,20 +66,44 @@ class AuthRepositoryImpl(
         request: CompleteRegistrationRequest
     ): Result<Pair<String, String>> {
         return try {
+            Log.i("AuthService", "=== INICIANDO completeRegistration ===")
+            Log.i("AuthService", "SessionID: ${request.sessionId}")
+            Log.i("AuthService", "Username: ${request.username}")
+            Log.i("AuthService", "Email: ${request.email}")
+
             val response = apiService.completeRegistration(request)
+
+            Log.i("AuthService", "Response Code: ${response.code()}")
+            Log.i("AuthService", "Response Success: ${response.isSuccessful}")
+
             if (response.isSuccessful && response.body() != null) {
                 val credentials = response.body()!!
-                Log.i("AuthService", "Registro completado. Usuario: ${credentials.username}")
+                Log.i("AuthService", "✅ Registro completado exitosamente!")
+                Log.i("AuthService", "Usuario generado: ${credentials.username}")
                 // Devuelve username y password como Pair
                 Result.success(Pair(credentials.username, credentials.password))
             } else {
-                println("AuthService Error: Fallo en el registro. Código HTTP: ${response.code()}")
-                println("AuthService Error Body: ${response.errorBody()?.string()}")
-                Result.failure(Exception("Error: ${response.message()}"))
+                val errorBody = response.errorBody()?.string()
+                Log.e("AuthService", "❌ ERROR en registro!")
+                Log.e("AuthService", "Código HTTP: ${response.code()}")
+                Log.e("AuthService", "Mensaje: ${response.message()}")
+                Log.e("AuthService", "Error Body: $errorBody")
+
+                // Provide more specific error message
+                val errorMsg = when (response.code()) {
+                    400 -> "Datos inválidos o sesión de pago ya utilizada"
+                    404 -> "Sesión de pago no encontrada"
+                    500 -> "Error del servidor. Intenta de nuevo más tarde"
+                    else -> "Error: ${response.code()} - ${response.message()}"
+                }
+                Result.failure(Exception(errorMsg))
             }
+        } catch (e: IOException) {
+            Log.e("AuthService", "❌ Error de red en completeRegistration", e)
+            Result.failure(Exception("Error de conexión. Verifica tu internet."))
         } catch (e: Exception) {
-            Log.e("AuthService", "Exception en completeRegistration: ${e.message}", e)
-            Result.failure(e)
+            Log.e("AuthService", "❌ Exception en completeRegistration: ${e.message}", e)
+            Result.failure(Exception("Error inesperado: ${e.message}"))
         }
     }
 

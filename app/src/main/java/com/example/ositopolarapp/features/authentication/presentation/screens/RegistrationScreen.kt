@@ -24,14 +24,11 @@ fun RegistrationScreen(
     viewModel: RegistrationViewModel,
     planId: Int,
     userType: String,
-    deepLinkUri: Uri?,
-    onRegistrationSuccess: (username: String, password: String) -> Unit,
-    onDeepLinkProcessed: () -> Unit
+    onRegistrationSuccess: (username: String, password: String) -> Unit
 ) {
     // --- ViewModel y Estado de la UI ---
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    var deepLinkHandled by rememberSaveable { mutableStateOf(false) }
 
     // 🛑 1. ESTADO LOCAL DEL FORMULARIO (Usando rememberSaveable para persistencia)
     var username by rememberSaveable { mutableStateOf("") }
@@ -62,36 +59,23 @@ fun RegistrationScreen(
         }
     }
 
-    // 3. Reacciona al Deep Link (Paso 2: Completar Registro)
-    LaunchedEffect(deepLinkUri) {
-        if (deepLinkUri != null && !deepLinkHandled) {
-
-            deepLinkHandled = true
-
-            try {
-                val sessionId = deepLinkUri.getQueryParameter("session_id")
-                if (deepLinkUri.path == "/success" && sessionId != null) {
-                    viewModel.completeRegistration(sessionId)
-                }
-            } finally {
-                onDeepLinkProcessed()
-            }
-        }
-    }
-
-    // 4. Reacciona al Éxito del Registro
+    // 3. Reacciona al Éxito del Registro (only from registration-complete route)
     LaunchedEffect(uiState.registrationComplete) {
         if (uiState.registrationComplete &&
             uiState.generatedUsername != null &&
             uiState.generatedPassword != null) {
+            Log.i("RegistrationScreen", "Registration completed successfully! Username: ${uiState.generatedUsername}")
             Toast.makeText(context, "Registro completado", Toast.LENGTH_LONG).show()
             onRegistrationSuccess(uiState.generatedUsername!!, uiState.generatedPassword!!)
+        } else if (uiState.registrationComplete) {
+            Log.e("RegistrationScreen", "Registration marked complete but credentials are null! Username: ${uiState.generatedUsername}, Password present: ${uiState.generatedPassword != null}")
         }
     }
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
-            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            Log.e("RegistrationScreen", "Error occurred: $it")
+            Toast.makeText(context, "ERROR: $it", Toast.LENGTH_LONG).show()
         }
     }
 

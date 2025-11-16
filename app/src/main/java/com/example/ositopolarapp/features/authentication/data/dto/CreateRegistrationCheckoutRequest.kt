@@ -35,6 +35,10 @@ data class CompleteRegistrationRequest(
 // Lo que RECIBIMOS en el Paso 2 (credenciales generadas)
 data class CompleteRegistrationResponse(
     @SerializedName("username") val username: String,
-    @SerializedName("password") val password: String,
-    @SerializedName("message") val message: String? = null
+    @SerializedName("generatedPassword") val password: String,  // Backend usa "generatedPassword", no "password"
+    @SerializedName("message") val message: String? = null,
+    @SerializedName("success") val success: Boolean? = null,
+    @SerializedName("userId") val userId: Int? = null,
+    @SerializedName("userType") val userType: String? = null,
+    @SerializedName("email") val email: String? = null
 )
