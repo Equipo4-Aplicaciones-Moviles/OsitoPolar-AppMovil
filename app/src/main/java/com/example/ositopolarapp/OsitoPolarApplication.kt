@@ -2,16 +2,18 @@ package com.example.ositopolarapp
 
 import android.app.Application
 import com.example.ositopolarapp.core.di.AppContainer
-import android.content.Intent
-import com.example.ositopolarapp.features.authentication.domain.repository.AuthRepository
+import com.example.ositopolarapp.core.di.DefaultAppContainer
+// Asegúrate de que DefaultAppContainer exista.
+// Si tu contenedor se llama AppDataContainer, cambia el nombre aquí.
 
-/**
- * Clase Application personalizada para inicializar dependencias únicas (Singletons).
- */
 class OsitoPolarApplication : Application() {
 
-    // Instancia pública y única del Contenedor de Dependencias
-    val appContainer: AppContainer by lazy {
-        AppContainer(applicationContext)
+    // Esta es la variable 'container' que MainActivity no encontraba
+    lateinit var container: AppContainer
+
+    override fun onCreate() {
+        super.onCreate()
+        // Inicializamos el contenedor
+        container = DefaultAppContainer(this)
     }
 }

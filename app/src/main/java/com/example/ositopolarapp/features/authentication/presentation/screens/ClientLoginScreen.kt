@@ -1,173 +1,220 @@
 package com.example.ositopolarapp.features.authentication.presentation.screens
 
-import androidx.compose.foundation.BorderStroke
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.ositopolarapp.ui.composables.OsitoPolarFooter
-import com.example.ositopolarapp.ui.composables.OsitoPolarTopBar
-import com.example.ositopolarapp.ui.theme.OsitoPolarAppTheme
+import androidx.compose.ui.unit.sp
+// Imports de tu proyecto
+import com.example.ositopolarapp.navigation.ui.composables.OsitoLabel
+import com.example.ositopolarapp.navigation.ui.composables.OsitoTextField
+import com.example.ositopolarapp.ui.theme.OsitoBluePrimary
+import com.example.ositopolarapp.ui.theme.OsitoBackground
 
 @Composable
 fun ClientLoginScreen(
-    onLoginClicked: (String, String) -> Unit, // Devuelve usuario y pass
-    onRegisterClicked: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onRegisterClicked: () -> Unit,
+    onForgotPasswordClicked: () -> Unit
+    // TODO: Aquí podrías inyectar un ClientLoginViewModel si tienes lógica específica
 ) {
-    // Estados 'falsos' solo para que la UI funcione y podamos escribir
+    val context = LocalContext.current
+
+    // Estados locales para el formulario
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    Scaffold(
-        topBar = {
-            // 1. Llamamos al TopBar importado
-            OsitoPolarTopBar(onMenuClicked = { /* TODO: Abrir menú lateral */ })
-        },
-        bottomBar = {
-            // 2. Llamamos al Footer importado
-            OsitoPolarFooter()
-        }
-    ) { innerPadding ->
+    var passwordVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
 
+    // Simulación del degradado del fondo (El mismo estilo que el resto del onboarding)
+    val gradientBrush = remember {
+        Brush.verticalGradient(
+            colors = listOf(
+                OsitoBackground.copy(alpha = 0.3f),
+                Color.White
+            )
+        )
+    }
+
+    Scaffold { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(32.dp)
-                .padding(vertical = 64.dp)// Padding general de la pantalla
-                .background(color = MaterialTheme.colorScheme.surfaceVariant)
+                .background(Color.White)
         ) {
-
-            Card(
+            // Fondo con degradado
+            Box(
                 modifier = Modifier
-                    //.align(Alignment.Center) // Centramos la tarjeta
-                    .fillMaxWidth()
-                    .align(Alignment.Center)
-                    // Damos un padding horizontal para que no toque los bordes
-                    .padding(horizontal = 16.dp)
-                    .padding(vertical = 16.dp),
-                colors = CardDefaults.cardColors(
-                    // Usamos el color 'surface' (F2 EBEFF5)
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.surface
-                ),
-                // Añadimos el borde (F1 CFD8E8)
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
+                    .fillMaxSize()
+                    .background(gradientBrush)
             )
-            {
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
+            // Contenido Principal
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 30.dp, vertical = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Spacer(modifier = Modifier.height(40.dp))
 
-                    Text(
-                        text = "Sign In",
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.padding(bottom = 32.dp)
-                    )
+                // Títulos
+                Text(
+                    text = "¡Bienvenido de vuelta!",
+                    textAlign = TextAlign.Center,
+                    style = TextStyle(
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.W900,
+                        color = Color.Black,
+                        letterSpacing = (-0.5).sp,
+                    ),
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "Inicia sesión en tu cuenta",
+                    textAlign = TextAlign.Center,
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        color = Color(0xFF667085),
+                        fontWeight = FontWeight.W400,
+                    ),
+                )
+                Spacer(modifier = Modifier.height(50.dp))
 
-                    // Campo de Usuario
-                    OutlinedTextField(
-                        value = username,
-                        onValueChange = { username = it },
-                        label = { Text("Username") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        colors = TextFieldDefaults.colors(
-                            unfocusedContainerColor = MaterialTheme.colorScheme.outlineVariant,
-                            focusedContainerColor = MaterialTheme.colorScheme.outlineVariant,
-                            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                            unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
-                            focusedLabelColor = MaterialTheme.colorScheme.primary,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                        )
-                    )
+                // --- FORMULARIO ---
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                // Usuario
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+                    OsitoLabel("Nombre de usuario")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
 
-                    // Campo de Contraseña
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("Password") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(), // Oculta el texto
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        colors = TextFieldDefaults.colors(
-                            unfocusedContainerColor = MaterialTheme.colorScheme.outlineVariant,
-                            focusedContainerColor = MaterialTheme.colorScheme.outlineVariant,
-                            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                            unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
-                            focusedLabelColor = MaterialTheme.colorScheme.primary,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                        )
-                    )
+                OsitoTextField(
+                    value = username,
+                    onValueChange = { username = it },
+                    hintText = "Ej. juanperez",
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(24.dp))
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                // Contraseña
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+                    OsitoLabel("Contraseña")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
 
-                    // Botón de Sign In
-                    Button(
-                        onClick = { onLoginClicked(username, password) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(text = "Sign In")
+                OsitoTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    hintText = "•••••••••",
+                    isPassword = !passwordVisible,
+                    keyboardType = KeyboardType.Password,
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                                tint = Color(0xFF475467)
+                            )
+                        }
                     }
+                )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                // Olvidaste contraseña
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                    TextButton(onClick = onForgotPasswordClicked) {
+                        Text(
+                            text = "¿Olvidaste tu contraseña?",
+                            style = TextStyle(
+                                color = OsitoBluePrimary,
+                                fontWeight = FontWeight.W400,
+                                fontSize = 14.sp
+                            )
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(30.dp))
 
-                    // Texto para registrarse
-                    Text(
-                        text = "Don't have an account?"
-                    )
-
-                    TextButton(onClick = onRegisterClicked) {
-                        Text("Register")
+                // Botón Login
+                Button(
+                    onClick = {
+                        // Lógica simple de validación antes de llamar al callback
+                        if (username.isNotBlank() && password.isNotBlank()) {
+                            isLoading = true
+                            // Aquí simularíamos la llamada a la API
+                            // En una implementación real, llamarías a viewModel.login(username, password)
+                            Toast.makeText(context, "Iniciando sesión...", Toast.LENGTH_SHORT).show()
+                            onLoginSuccess() // Navega al éxito
+                            isLoading = false
+                        } else {
+                            Toast.makeText(context, "Por favor llena todos los campos", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    enabled = !isLoading,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = OsitoBluePrimary,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(100.dp)
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    } else {
+                        Text("Login", style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold))
                     }
                 }
 
+                Spacer(modifier = Modifier.height(30.dp))
 
+                // Enlace a Registro
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "¿No tienes cuenta? ",
+                        style = TextStyle(color = Color(0xFF667085), fontSize = 14.sp)
+                    )
+                    Text(
+                        text = "Regístrate",
+                        modifier = Modifier.clickable(onClick = onRegisterClicked),
+                        style = TextStyle(
+                            color = OsitoBluePrimary,
+                            fontWeight = FontWeight.W400,
+                            fontSize = 14.sp,
+                        ),
+                    )
+                }
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
 }
-
-@Preview
-@Composable
-fun SimpleComposablePreview() {
-    OsitoPolarAppTheme {
-        ClientLoginScreen(
-            // 1. Pasa una lambda vacía que acepta dos strings
-            onLoginClicked = { username, password ->
-                // En un preview, esto se deja vacío o se puede
-                // imprimir a la consola para depurar:
-                // Log.d("Preview", "User: $username, Pass: $password")
-            },
-            // 2. Pasa una lambda vacía simple
-            onRegisterClicked = {
-                // Vacío para el preview
-            }
-        )
-    }
-    // 3. Quita el ': Unit' de aquí, no va en una llamada de función
-}
-//poner cambios aqui
