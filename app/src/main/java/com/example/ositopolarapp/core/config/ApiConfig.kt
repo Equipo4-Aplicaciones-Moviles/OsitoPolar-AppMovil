@@ -21,7 +21,7 @@ object ApiConfig {
      * - Production: "https://api.ositopolar.com/api/v1/"
      * - Azure Deployed: "https://ositopolar-api.grayground-d49718c1.eastus.azurecontainerapps.io/api/v1/"
      */
-    const val BASE_URL = "https://ositopolar-api.grayground-d49718c1.eastus.azurecontainerapps.io/api/v1/"
+    const val BASE_URL = "http://192.168.18.62:8080/api/v1/"
 
     /**
      * Admin Key for administrative operations
