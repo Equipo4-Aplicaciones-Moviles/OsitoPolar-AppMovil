@@ -11,7 +11,9 @@ data class Plan(
     val billingCycle: BillingCycle = BillingCycle.MONTHLY,
     val maxEquipment: Int? = null,      // For Owners
     val maxClients: Int? = null,        // For Providers
-    val features: List<String> = emptyList()
+    val features: List<String> = emptyList(),
+    val name: String,
+    val description: String
 ) {
     /**
      * Returns a formatted price string with billing cycle.

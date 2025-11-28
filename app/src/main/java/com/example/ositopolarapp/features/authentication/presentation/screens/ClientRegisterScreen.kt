@@ -1,5 +1,8 @@
 package com.example.ositopolarapp.features.authentication.presentation.screens
 
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
@@ -16,12 +19,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ositopolarapp.features.authentication.data.dto.CompleteRegistrationRequest
+import com.example.ositopolarapp.features.authentication.presentation.state.RegistrationViewModel
 import com.example.ositopolarapp.navigation.ui.composables.OsitoLabel
 import com.example.ositopolarapp.navigation.ui.composables.OsitoTextField
 import com.example.ositopolarapp.ui.theme.OsitoBluePrimary
@@ -35,17 +42,21 @@ sealed class RegistrationStep(val number: Int, val title: String) {
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun ClientRegisterScreen(
-    onRegistrationSuccess: (username: String, password: String) -> Unit,
+    viewModel: RegistrationViewModel, // Inyectamos el ViewModel real
+    planId: Int,                      // Recibido de la pantalla anterior
+    userType: String,                 // Recibido de la pantalla anterior
     onSignInClicked: () -> Unit
 ) {
-    var currentStep by remember { mutableStateOf<RegistrationStep>(RegistrationStep.PersonalInfo) }
-    var isLoading by remember { mutableStateOf(false) }
+    // 1. Observar el estado del ViewModel
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
-    // --- CONTROLADORES Y ESTADO ---
+    var currentStep by remember { mutableStateOf<RegistrationStep>(RegistrationStep.PersonalInfo) }
+
+    // --- VARIABLES DEL FORMULARIO ---
     val name = remember { mutableStateOf("") }
     val lastName = remember { mutableStateOf("") }
     val email = remember { mutableStateOf("") }
-    // Eliminado: companyName
 
     val street = remember { mutableStateOf("") }
     val number = remember { mutableStateOf("") }
@@ -53,45 +64,60 @@ fun ClientRegisterScreen(
     val city = remember { mutableStateOf("") }
     val country = remember { mutableStateOf("") }
 
+    // Validaciones
     val isStep1Valid = remember { derivedStateOf { name.value.isNotEmpty() && lastName.value.isNotEmpty() && email.value.contains('@') } }
     val isStep2Valid = remember { derivedStateOf { street.value.isNotEmpty() && number.value.isNotEmpty() && city.value.isNotEmpty() && country.value.isNotEmpty() } }
 
-    val gradientBrush = remember {
-        Brush.verticalGradient(
-            colors = listOf(OsitoBackground.copy(alpha = 0.3f), Color.White)
-        )
+    // 2. EFECTO: ABRIR NAVEGADOR PARA PAGAR (STRIPE)
+    LaunchedEffect(uiState.checkoutUrl) {
+        uiState.checkoutUrl?.let { url ->
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            context.startActivity(intent)
+            viewModel.clearCheckoutUrl() // Limpiar para no reabrir al volver
+        }
     }
 
-    // --- LÓGICA DE ACCIÓN ---
+    // 3. EFECTO: MANEJO DE ERRORES
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    val gradientBrush = remember {
+        Brush.verticalGradient(colors = listOf(OsitoBackground.copy(alpha = 0.3f), Color.White))
+    }
+
+    // --- LÓGICA DE BOTONES ---
     val onNextPressed: () -> Unit = {
         if (currentStep == RegistrationStep.PersonalInfo && isStep1Valid.value) {
             currentStep = RegistrationStep.Address
         }
     }
 
-    val onSubmitPressed: () -> Unit = {
+    val onPayPressed: () -> Unit = {
         if (currentStep == RegistrationStep.Address && isStep2Valid.value) {
-            isLoading = true
-            // Simulación de API
-            val tempPassword = "Client-${System.currentTimeMillis().toString().substring(8)}"
-            val tempUsername = email.value.ifEmpty { name.value }
-
-            onRegistrationSuccess(tempUsername, tempPassword)
-            isLoading = false
+            // Empaquetar los datos en el DTO que acabamos de crear
+            val formData = CompleteRegistrationRequest(
+                firstName = name.value,
+                lastName = lastName.value,
+                email = email.value,
+                street = street.value,
+                number = number.value,
+                zipCode = zipCode.value,
+                city = city.value,
+                country = country.value,
+                planId = planId,
+                userType = userType
+            )
+            // Llamar al ViewModel para iniciar el pago
+            viewModel.createCheckout(planId, userType, formData)
         }
     }
 
     Scaffold { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(gradientBrush)
-            )
+        Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
+            Box(modifier = Modifier.fillMaxSize().background(gradientBrush))
 
             Column(
                 modifier = Modifier
@@ -99,37 +125,24 @@ fun ClientRegisterScreen(
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 30.dp, vertical = 20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     "Crea una cuenta",
                     textAlign = TextAlign.Center,
-                    style = TextStyle(
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.W900,
-                        color = Color.Black,
-                        letterSpacing = (-0.5).sp,
-                    ),
+                    style = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.W900, color = Color.Black),
                 )
-                Spacer(modifier = Modifier.height(10.dp))
 
-                // Login Link
+                // Link Login
                 Row(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        "Ya tienes una cuenta ",
-                        style = TextStyle(fontSize = 16.sp, color = Color(0xFF667085)),
-                    )
+                    Text("Ya tienes una cuenta ", style = TextStyle(fontSize = 16.sp, color = Color(0xFF667085)))
                     Text(
                         "Login",
                         modifier = Modifier.clickable(onClick = onSignInClicked),
-                        style = TextStyle(
-                            fontSize = 16.sp,
-                            color = OsitoBluePrimary,
-                        ),
+                        style = TextStyle(fontSize = 16.sp, color = OsitoBluePrimary)
                     )
                 }
 
@@ -143,7 +156,6 @@ fun ClientRegisterScreen(
                 // Formularios
                 AnimatedContent(targetState = currentStep, label = "FormStepAnimation") { step ->
                     when (step) {
-                        // ✅ CORRECCIÓN: Ya no pasamos companyName
                         RegistrationStep.PersonalInfo -> _buildStep1Form(name, lastName, email)
                         RegistrationStep.Address -> _buildStep2Form(street, number, zipCode, city, country)
                     }
@@ -151,75 +163,49 @@ fun ClientRegisterScreen(
 
                 Spacer(modifier = Modifier.height(40.dp))
 
-                // Botón de Acción
+                // BOTÓN PRINCIPAL
                 Button(
                     onClick = when (currentStep) {
                         RegistrationStep.PersonalInfo -> onNextPressed
-                        RegistrationStep.Address -> onSubmitPressed
+                        RegistrationStep.Address -> onPayPressed // Ahora llama a la lógica de pago
                     },
-                    enabled = !isLoading && when (currentStep) {
+                    enabled = !uiState.isLoading && when (currentStep) {
                         RegistrationStep.PersonalInfo -> isStep1Valid.value
                         RegistrationStep.Address -> isStep2Valid.value
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = OsitoBluePrimary,
-                        contentColor = Color.White
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = OsitoBluePrimary),
                     shape = RoundedCornerShape(100.dp)
                 ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                     } else {
                         Text(
-                            if (currentStep == RegistrationStep.PersonalInfo) "Siguiente" else "Registrar",
+                            if (currentStep == RegistrationStep.PersonalInfo) "Siguiente" else "Ir a Pagar",
                             style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold),
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(30.dp))
-
-                // Footer Link
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "¿No tienes cuenta? ",
-                        style = TextStyle(color = Color(0xFF667085), fontSize = 14.sp)
-                    )
-                    Text(
-                        "Regístrate",
-                        style = TextStyle(color = OsitoBluePrimary, fontWeight = FontWeight.W400, fontSize = 14.sp),
-                        modifier = Modifier.clickable(onClick = onSignInClicked)
-                    )
-                }
-                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
 }
 
-// --- WIDGETS AUXILIARES ---
+// ----------------------------------------------------------------------------
+// COMPONENTES UI (Copia estos tal cual si ya los tenías, los incluyo por si acaso)
+// ----------------------------------------------------------------------------
 
 @Composable
 fun _buildStepper(currentStep: RegistrationStep) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 10.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         _buildStepItem(RegistrationStep.PersonalInfo, currentStep.number)
-
-        Spacer(modifier = Modifier
-            .weight(1f)
-            .height(2.dp)
-            .background(OsitoBluePrimary)
-            .padding(top = 40.dp))
-
+        Spacer(modifier = Modifier.weight(1f).height(2.dp).background(OsitoBluePrimary).padding(top = 40.dp))
         _buildStepItem(RegistrationStep.Address, currentStep.number)
     }
 }
@@ -227,17 +213,11 @@ fun _buildStepper(currentStep: RegistrationStep) {
 @Composable
 fun _buildStepItem(step: RegistrationStep, currentStepNumber: Int) {
     val isActive = currentStepNumber >= step.number
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             step.title,
             textAlign = TextAlign.Center,
-            style = TextStyle(
-                fontSize = 12.sp,
-                color = OsitoBluePrimary,
-                fontWeight = FontWeight.W500,
-            ),
+            style = TextStyle(fontSize = 12.sp, color = OsitoBluePrimary, fontWeight = FontWeight.W500),
             modifier = Modifier.width(80.dp)
         )
         Spacer(modifier = Modifier.height(10.dp))
@@ -250,51 +230,23 @@ fun _buildStepItem(step: RegistrationStep, currentStepNumber: Int) {
         ) {
             Text(
                 step.number.toString(),
-                style = TextStyle(
-                    color = OsitoBluePrimary,
-                    fontWeight = if (isActive) FontWeight.W900 else FontWeight.Bold,
-                    fontSize = 14.sp,
-                ),
+                style = TextStyle(color = OsitoBluePrimary, fontWeight = if (isActive) FontWeight.W900 else FontWeight.Bold, fontSize = 14.sp)
             )
         }
     }
 }
 
-// --- FORMULARIOS ---
-
-// ✅ CORRECCIÓN: Eliminado el parámetro y campo de companyName
 @Composable
 fun _buildStep1Form(name: MutableState<String>, lastName: MutableState<String>, email: MutableState<String>) {
     Column(modifier = Modifier.fillMaxWidth()) {
         OsitoLabel("Nombres")
-        Spacer(modifier = Modifier.height(8.dp))
-        OsitoTextField(
-            value = name.value,
-            onValueChange = { name.value = it },
-            hintText = "Ej. Oliver",
-            modifier = Modifier.fillMaxWidth()
-        )
+        OsitoTextField(value = name.value, onValueChange = { name.value = it }, hintText = "Ej. Oliver", modifier = Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(20.dp))
-
         OsitoLabel("Apellido")
-        Spacer(modifier = Modifier.height(8.dp))
-        OsitoTextField(
-            value = lastName.value,
-            onValueChange = { lastName.value = it },
-            hintText = "Ej. Smith",
-            modifier = Modifier.fillMaxWidth()
-        )
+        OsitoTextField(value = lastName.value, onValueChange = { lastName.value = it }, hintText = "Ej. Smith", modifier = Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(20.dp))
-
         OsitoLabel("Email")
-        Spacer(modifier = Modifier.height(8.dp))
-        OsitoTextField(
-            value = email.value,
-            onValueChange = { email.value = it },
-            hintText = "ejemplo@correo.com",
-            keyboardType = KeyboardType.Email,
-            modifier = Modifier.fillMaxWidth()
-        )
+        OsitoTextField(value = email.value, onValueChange = { email.value = it }, hintText = "ejemplo@correo.com", keyboardType = KeyboardType.Email, modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -302,58 +254,23 @@ fun _buildStep1Form(name: MutableState<String>, lastName: MutableState<String>, 
 fun _buildStep2Form(street: MutableState<String>, number: MutableState<String>, zipCode: MutableState<String>, city: MutableState<String>, country: MutableState<String>) {
     Column(modifier = Modifier.fillMaxWidth()) {
         OsitoLabel("Calle")
-        Spacer(modifier = Modifier.height(8.dp))
-        OsitoTextField(
-            value = street.value,
-            onValueChange = { street.value = it },
-            hintText = "Av. Principal",
-            modifier = Modifier.fillMaxWidth()
-        )
+        OsitoTextField(value = street.value, onValueChange = { street.value = it }, hintText = "Av. Principal", modifier = Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(20.dp))
-
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
             Column(modifier = Modifier.weight(1f)) {
                 OsitoLabel("Número")
-                Spacer(modifier = Modifier.height(8.dp))
-                OsitoTextField(
-                    value = number.value,
-                    onValueChange = { number.value = it },
-                    hintText = "123",
-                    keyboardType = KeyboardType.Number,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                OsitoTextField(value = number.value, onValueChange = { number.value = it }, hintText = "123", keyboardType = KeyboardType.Number, modifier = Modifier.fillMaxWidth())
             }
             Column(modifier = Modifier.weight(1f)) {
                 OsitoLabel("C. Postal")
-                Spacer(modifier = Modifier.height(8.dp))
-                OsitoTextField(
-                    value = zipCode.value,
-                    onValueChange = { zipCode.value = it },
-                    hintText = "15001",
-                    keyboardType = KeyboardType.Number,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                OsitoTextField(value = zipCode.value, onValueChange = { zipCode.value = it }, hintText = "15001", keyboardType = KeyboardType.Number, modifier = Modifier.fillMaxWidth())
             }
         }
         Spacer(modifier = Modifier.height(20.dp))
-
         OsitoLabel("Ciudad")
-        Spacer(modifier = Modifier.height(8.dp))
-        OsitoTextField(
-            value = city.value,
-            onValueChange = { city.value = it },
-            hintText = "Lima",
-            modifier = Modifier.fillMaxWidth()
-        )
+        OsitoTextField(value = city.value, onValueChange = { city.value = it }, hintText = "Lima", modifier = Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(20.dp))
-
         OsitoLabel("País")
-        Spacer(modifier = Modifier.height(8.dp))
-        OsitoTextField(
-            value = country.value,
-            onValueChange = { country.value = it },
-            hintText = "Perú",
-            modifier = Modifier.fillMaxWidth()
-        )
+        OsitoTextField(value = country.value, onValueChange = { country.value = it }, hintText = "Perú", modifier = Modifier.fillMaxWidth())
     }
 }

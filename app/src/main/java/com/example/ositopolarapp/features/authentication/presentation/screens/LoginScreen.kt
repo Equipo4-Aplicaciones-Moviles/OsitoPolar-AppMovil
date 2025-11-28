@@ -1,126 +1,150 @@
 package com.example.ositopolarapp.features.authentication.presentation.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.ositopolarapp.core.di.AuthViewModelFactory
-import com.example.ositopolarapp.features.authentication.presentation.state.LoginViewModel
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ositopolarapp.features.authentication.presentation.components.TwoFactorVerificationDialog
-import com.example.ositopolarapp.features.authentication.presentation.components.TwoFactorSetupDialog
+import com.example.ositopolarapp.features.authentication.presentation.state.LoginViewModel
+import com.example.ositopolarapp.ui.theme.OsitoBluePrimary
 
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel, // Inyectado por la Factory
+    viewModel: LoginViewModel,
     onLoginSuccess: () -> Unit,
     onGoToRegister: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    // Campos de texto
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
 
-    // --- Efectos ---
-    // Observa el estado de éxito
-    LaunchedEffect(uiState.loginSuccess) {
-        if (uiState.loginSuccess) {
-            Toast.makeText(context, "¡Bienvenido ${uiState.user?.username}!", Toast.LENGTH_SHORT).show()
-            onLoginSuccess() // Navega al dashboard
-        }
-    }
+    // --- EFECTOS ---
 
-    // Observa el estado de 2FA
-    LaunchedEffect(uiState.requires2FA) {
-        if (uiState.requires2FA) {
-            // TODO: Abrir un diálogo/bottom-sheet para pedir el código 2FA
-            Toast.makeText(context, "Se requiere 2FA", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // Observa los errores
+    // 1. Manejo de Errores
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
         }
     }
 
-    // Show 2FA Setup Dialog (first login)
-    if (uiState.requiresTwoFactorSetup) {
-        TwoFactorSetupDialog(
-            viewModel = viewModel,
-            uiState = uiState,
-            qrCodeDataUrl = uiState.user?.qrCodeDataUrl,
-            manualKey = uiState.user?.manualEntryKey
-        )
+    // 2. Navegación al tener éxito
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            onLoginSuccess()
+        }
     }
 
-    // Show 2FA Verification Dialog (subsequent logins)
-    if (uiState.requires2FA && !uiState.requiresTwoFactorSetup) {
-        TwoFactorVerificationDialog(viewModel = viewModel, uiState = uiState)
-    }
-
-    // --- UI ---
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(
+    Scaffold { padding ->
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .fillMaxSize()
+                .padding(padding),
+            contentAlignment = Alignment.Center
         ) {
-            Text("Iniciar Sesión", style = MaterialTheme.typography.headlineLarge)
-            Spacer(modifier = Modifier.height(32.dp))
-
-            OutlinedTextField(
-                value = username,
-                onValueChange = { username = it },
-                label = { Text("Usuario") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Contraseña") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-            )
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Button(
-                onClick = { viewModel.signIn(username.trim(), password.trim()) },
-                enabled = !uiState.isLoading,
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
-                } else {
-                    Text("Entrar")
+                Text(
+                    text = "Iniciar Sesión",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = OsitoBluePrimary
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // CAMPO USUARIO
+                OutlinedTextField(
+                    value = username,
+                    onValueChange = { username = it },
+                    label = { Text("Usuario") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // CAMPO CONTRASEÑA
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Contraseña") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = {
+                        val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(imageVector = image, contentDescription = null)
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // BOTÓN LOGIN
+                Button(
+                    onClick = { viewModel.signIn(username, password) },
+                    enabled = !uiState.isLoading && username.isNotBlank() && password.isNotBlank(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = OsitoBluePrimary)
+                ) {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
+                    } else {
+                        Text("Entrar", fontSize = 18.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // LINK REGISTRO
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("¿No tienes cuenta? ")
+                    Text(
+                        text = "Regístrate aquí",
+                        color = OsitoBluePrimary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable { onGoToRegister() }
+                    )
                 }
             }
+        }
 
-            TextButton(
-                onClick = onGoToRegister,
-                enabled = !uiState.isLoading
-            ) {
-                Text("¿No tienes cuenta? Regístrate")
-            }
+        // --- DIÁLOGOS ---
+
+        // Diálogo de Verificación 2FA (Se muestra si el login pide 2FA)
+        if (uiState.requires2FA) {
+            TwoFactorVerificationDialog(
+                isLoading = uiState.isLoading,
+                error = uiState.error,
+                onVerify = { code -> viewModel.verify2FA(code) },
+                onDismiss = { /* Opcional: Cancelar login o limpiar estado */ }
+            )
         }
     }
 }

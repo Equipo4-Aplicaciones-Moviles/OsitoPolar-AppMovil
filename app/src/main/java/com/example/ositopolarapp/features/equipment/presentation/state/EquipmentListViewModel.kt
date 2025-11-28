@@ -12,26 +12,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * UI state for Equipment List screen.
- */
 data class EquipmentListUiState(
     val isLoading: Boolean = false,
     val equipmentList: List<Equipment> = emptyList(),
-    val filteredEquipmentList: List<Equipment> = emptyList(),
-    val error: String? = null,
-    val searchQuery: String = "",
-    val selectedStatus: String? = null,
-    val deleteSuccess: Boolean = false,
-    val deletingEquipmentId: Int? = null,
-    val createSuccess: Boolean = false,
-    val isCreating: Boolean = false
+    val error: String? = null
 )
 
-/**
- * ViewModel for Equipment List screen.
- * Handles fetching, filtering, creating, and deleting equipment.
- */
 class EquipmentListViewModel(
     private val getAllEquipmentsUseCase: GetAllEquipmentsUseCase,
     private val createEquipmentUseCase: CreateEquipmentUseCase,
@@ -42,173 +28,54 @@ class EquipmentListViewModel(
     val uiState: StateFlow<EquipmentListUiState> = _uiState.asStateFlow()
 
     init {
-        loadEquipment()
+        loadEquipments()
     }
 
-    /**
-     * Loads all equipment from the repository.
-     */
-    fun loadEquipment() {
+    fun loadEquipments() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-
             getAllEquipmentsUseCase()
-                .onSuccess { equipmentList ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            equipmentList = equipmentList,
-                            filteredEquipmentList = filterEquipment(equipmentList, it.searchQuery, it.selectedStatus),
-                            error = null
-                        )
-                    }
+                .onSuccess { list ->
+                    _uiState.update { it.copy(isLoading = false, equipmentList = list) }
                 }
                 .onFailure { error ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            error = error.message ?: "Failed to load equipment"
-                        )
-                    }
+                    _uiState.update { it.copy(isLoading = false, error = error.message) }
                 }
         }
     }
 
-    /**
-     * Updates the search query and filters the equipment list.
-     */
-    fun updateSearchQuery(query: String) {
-        _uiState.update {
-            it.copy(
-                searchQuery = query,
-                filteredEquipmentList = filterEquipment(it.equipmentList, query, it.selectedStatus)
-            )
-        }
-    }
-
-    /**
-     * Updates the status filter and filters the equipment list.
-     */
-    fun updateStatusFilter(status: String?) {
-        _uiState.update {
-            it.copy(
-                selectedStatus = status,
-                filteredEquipmentList = filterEquipment(it.equipmentList, it.searchQuery, status)
-            )
-        }
-    }
-
-    /**
-     * Filters equipment list based on search query and status.
-     */
-    private fun filterEquipment(
-        equipmentList: List<Equipment>,
-        searchQuery: String,
-        selectedStatus: String?
-    ): List<Equipment> {
-        var filtered = equipmentList
-
-        // Filter by search query
-        if (searchQuery.isNotBlank()) {
-            filtered = filtered.filter {
-                it.name.contains(searchQuery, ignoreCase = true) ||
-                it.manufacturer.contains(searchQuery, ignoreCase = true) ||
-                it.model.contains(searchQuery, ignoreCase = true)
+    // --- ESTA ES LA FUNCIÓN QUE FALTABA ---
+    fun addEquipment(
+        ownerId: Int,
+        name: String,
+        type: String,
+        model: String,
+        serialNumber: String,
+        brand: String,
+        location: String,
+        address: String,
+        latitude: Double,
+        longitude: Double
+    ) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            createEquipmentUseCase(
+                ownerId, name, type, model, serialNumber, brand, location, address, latitude, longitude
+            ).onSuccess {
+                // Si se crea con éxito, recargamos la lista
+                loadEquipments()
+            }.onFailure { error ->
+                _uiState.update { it.copy(isLoading = false, error = error.message) }
             }
         }
-
-        // Filter by status
-        if (selectedStatus != null) {
-            filtered = filtered.filter {
-                it.status.name.equals(selectedStatus, ignoreCase = true)
-            }
-        }
-
-        return filtered
     }
 
-    /**
-     * Deletes an equipment by ID.
-     */
-    fun deleteEquipment(equipmentId: Int) {
+    fun deleteEquipment(id: Int) {
         viewModelScope.launch {
-            _uiState.update { it.copy(deletingEquipmentId = equipmentId, error = null) }
-
-            deleteEquipmentUseCase(equipmentId)
-                .onSuccess {
-                    // Remove equipment from list
-                    val updatedList = _uiState.value.equipmentList.filter { it.id != equipmentId }
-                    _uiState.update {
-                        it.copy(
-                            deletingEquipmentId = null,
-                            equipmentList = updatedList,
-                            filteredEquipmentList = filterEquipment(updatedList, it.searchQuery, it.selectedStatus),
-                            deleteSuccess = true,
-                            error = null
-                        )
-                    }
-                }
-                .onFailure { error ->
-                    _uiState.update {
-                        it.copy(
-                            deletingEquipmentId = null,
-                            error = error.message ?: "Failed to delete equipment"
-                        )
-                    }
-                }
+            deleteEquipmentUseCase(id).onSuccess { loadEquipments() }
         }
     }
 
-    /**
-     * Creates a new equipment.
-     */
-    fun createEquipment(equipment: Equipment) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isCreating = true, error = null, createSuccess = false) }
-
-            createEquipmentUseCase(equipment)
-                .onSuccess { createdEquipment ->
-                    // Add new equipment to list
-                    val updatedList = _uiState.value.equipmentList + createdEquipment
-                    _uiState.update {
-                        it.copy(
-                            isCreating = false,
-                            equipmentList = updatedList,
-                            filteredEquipmentList = filterEquipment(updatedList, it.searchQuery, it.selectedStatus),
-                            createSuccess = true,
-                            error = null
-                        )
-                    }
-                }
-                .onFailure { error ->
-                    _uiState.update {
-                        it.copy(
-                            isCreating = false,
-                            createSuccess = false,
-                            error = error.message ?: "Failed to create equipment"
-                        )
-                    }
-                }
-        }
-    }
-
-    /**
-     * Clears the create success flag.
-     */
-    fun clearCreateSuccess() {
-        _uiState.update { it.copy(createSuccess = false) }
-    }
-
-    /**
-     * Clears the delete success flag.
-     */
-    fun clearDeleteSuccess() {
-        _uiState.update { it.copy(deleteSuccess = false) }
-    }
-
-    /**
-     * Clears the error message.
-     */
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }

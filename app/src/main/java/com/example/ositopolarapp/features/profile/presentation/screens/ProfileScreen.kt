@@ -1,283 +1,145 @@
 package com.example.ositopolarapp.features.profile.presentation.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.ositopolarapp.ui.theme.OsitoBluePrimary
 
-/**
- * Profile Screen
- *
- * Displays user information, subscription details, and settings.
- * Features:
- * - User info card
- * - Subscription/Plan info
- * - 2FA settings
- * - Logout
- */
-@OptIn(ExperimentalMaterial3Api::class)
+// ESTA ES LA VERSIÓN CORRECTA QUE EL DASHBOARD ESTÁ BUSCANDO
 @Composable
 fun ProfileScreen(
     username: String,
     userType: String,
-    planName: String?,
+    planName: String,
     onLogout: () -> Unit,
-    onNavigateToEditProfile: () -> Unit = {},
-    onNavigateToPaymentHistory: () -> Unit = {},
-    onNavigateTo2FASettings: () -> Unit = {},
-    onNavigateToSettings: () -> Unit = {},
-    onNavigateToUpgradePlan: () -> Unit = {},
+    onNavigateToEditProfile: () -> Unit,
+    onNavigateToPaymentHistory: () -> Unit,
+    onNavigateTo2FASettings: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToUpgradePlan: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Mi Perfil",
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            )
-        },
+    Column(
         modifier = modifier
-    ) { paddingValues ->
-        Column(
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // 1. Cabecera (Avatar y Nombre)
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .size(100.dp)
+                .background(OsitoBluePrimary.copy(alpha = 0.1f), CircleShape),
+            contentAlignment = Alignment.Center
         ) {
-            // User Info Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Avatar placeholder
-                    Surface(
-                        shape = MaterialTheme.shapes.extraLarge,
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.size(80.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                text = username.firstOrNull()?.uppercase() ?: "U",
-                                style = MaterialTheme.typography.displaySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-
-                    Text(
-                        text = username,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    AssistChip(
-                        onClick = { },
-                        label = { Text(userType) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    )
-                }
-            }
-
-            // Subscription Info Card
-            if (planName != null) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(
-                                    text = "Plan Actual",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-                                )
-                                Text(
-                                    text = planName,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                            }
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Upgrade button
-                        OutlinedButton(
-                            onClick = onNavigateToUpgradePlan,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Mejorar Plan")
-                        }
-                    }
-                }
-            }
-
-            // Settings Section
             Text(
-                text = "Configuración",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                text = if (username.isNotEmpty()) username.take(1).uppercase() else "U",
+                style = MaterialTheme.typography.displayMedium,
+                color = OsitoBluePrimary
             )
+        }
 
-            // Edit Profile
-            Card(
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = username,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = userType,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // 2. Tarjeta de Plan
+        Card(
+            colors = CardDefaults.cardColors(containerColor = OsitoBluePrimary),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onNavigateToEditProfile() }
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                ListItem(
-                    headlineContent = { Text("Editar Perfil") },
-                    supportingContent = { Text("Actualiza tu información personal") },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = null
-                        )
-                    },
-                    trailingContent = {
-                        Icon(
-                            imageVector = Icons.Default.ChevronRight,
-                            contentDescription = null
-                        )
-                    }
-                )
-            }
-
-            // App Settings
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onNavigateToSettings() }
-            ) {
-                ListItem(
-                    headlineContent = { Text("Configuración") },
-                    supportingContent = { Text("Tema, notificaciones y más") },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = null
-                        )
-                    },
-                    trailingContent = {
-                        Icon(
-                            imageVector = Icons.Default.ChevronRight,
-                            contentDescription = null
-                        )
-                    }
-                )
-            }
-
-            // 2FA Setting
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onNavigateTo2FASettings() }
-            ) {
-                ListItem(
-                    headlineContent = { Text("Autenticación de Dos Factores") },
-                    supportingContent = { Text("Protege tu cuenta con 2FA") },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = null
-                        )
-                    },
-                    trailingContent = {
-                        Icon(
-                            imageVector = Icons.Default.ChevronRight,
-                            contentDescription = null
-                        )
-                    }
-                )
-            }
-
-            // Payment History
-            Card(modifier = Modifier.fillMaxWidth()) {
-                ListItem(
-                    headlineContent = { Text("Historial de Pagos") },
-                    supportingContent = { Text("Ver tus transacciones") },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Default.Receipt,
-                            contentDescription = null
-                        )
-                    },
-                    trailingContent = {
-                        Icon(
-                            imageVector = Icons.Default.ChevronRight,
-                            contentDescription = null
-                        )
-                    },
-                    modifier = Modifier.clickable { onNavigateToPaymentHistory() }
-                )
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Logout Button
-            OutlinedButton(
-                onClick = onLogout,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Logout,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Cerrar Sesión")
+                Column {
+                    Text("Plan Actual", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+                    Text(planName, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                }
+                Button(
+                    onClick = onNavigateToUpgradePlan,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                    contentPadding = PaddingValues(horizontal = 12.dp)
+                ) {
+                    Text("Mejorar", color = OsitoBluePrimary)
+                }
             }
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Configuración",
+            modifier = Modifier.fillMaxWidth(),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // 3. Opciones del Menú
+        ProfileOptionItem(Icons.Default.Edit, "Editar Perfil", onNavigateToEditProfile)
+        ProfileOptionItem(Icons.Default.Settings, "Configuración General", onNavigateToSettings)
+        ProfileOptionItem(Icons.Default.Security, "Seguridad 2FA", onNavigateTo2FASettings)
+        ProfileOptionItem(Icons.Default.Receipt, "Historial de Pagos", onNavigateToPaymentHistory)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // 4. Botón Cerrar Sesión
+        Button(
+            onClick = onLogout,
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFEBEE), contentColor = Color.Red),
+            modifier = Modifier.fillMaxWidth().height(50.dp)
+        ) {
+            Icon(Icons.Default.ExitToApp, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Cerrar Sesión")
+        }
     }
+}
+
+@Composable
+fun ProfileOptionItem(icon: ImageVector, title: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(imageVector = icon, contentDescription = null, tint = Color.Gray)
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(text = title, modifier = Modifier.weight(1f), fontSize = 16.sp)
+        Icon(imageVector = Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
+    }
+    Divider(color = Color.LightGray.copy(alpha = 0.3f))
 }

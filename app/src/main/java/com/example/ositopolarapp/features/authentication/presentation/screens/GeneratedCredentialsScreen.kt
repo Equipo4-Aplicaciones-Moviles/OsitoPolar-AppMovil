@@ -1,10 +1,12 @@
 package com.example.ositopolarapp.features.authentication.presentation.screens
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
@@ -16,268 +18,192 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ositopolarapp.features.authentication.presentation.state.RegistrationViewModel
+import com.example.ositopolarapp.ui.theme.OsitoBluePrimary
 
-/**
- * Screen that displays the generated credentials after successful registration.
- * This screen shows the username and password ONLY ONCE.
- * User must save these credentials as they won't be shown again.
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GeneratedCredentialsScreen(
-    username: String,
-    password: String,
-    onNavigateToLogin: () -> Unit
+    viewModel: RegistrationViewModel,
+    sessionId: String?, // Recibimos el ID que viene de Stripe
+    onLoginClicked: () -> Unit
 ) {
-    val clipboardManager = LocalClipboardManager.current
-    var copied by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "¡Registro Exitoso!",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            )
+    // 1. Al iniciar la pantalla, si tenemos SessionID, completamos el registro
+    LaunchedEffect(sessionId) {
+        if (sessionId != null && !uiState.registrationComplete) {
+            viewModel.completeRegistration(sessionId)
         }
-    ) { paddingValues ->
+    }
+
+    Scaffold { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState()),
+                .padding(24.dp),
             contentAlignment = Alignment.Center
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                // Success Icon
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = "Success",
-                    modifier = Modifier.size(80.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+            when {
+                // CASO A: CARGANDO (Video min 1:55)
+                uiState.isLoading -> {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(
+                            color = OsitoBluePrimary,
+                            modifier = Modifier.size(60.dp)
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text(
+                            text = "Completando registro...",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Por favor espera mientras procesamos tu pago",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
 
-                // Title
-                Text(
-                    text = "¡Tu cuenta ha sido creada!",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-
-                // Warning Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                // CASO B: ERROR
+                uiState.error != null -> {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
                             imageVector = Icons.Default.Warning,
-                            contentDescription = "Warning",
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(32.dp)
+                            contentDescription = "Error",
+                            tint = Color.Red,
+                            modifier = Modifier.size(80.dp)
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "IMPORTANTE: Estas credenciales se muestran solo una vez. Guárdalas en un lugar seguro.",
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = "Hubo un problema",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = uiState.error ?: "Error desconocido",
+                            textAlign = TextAlign.Center,
+                            color = Color.Red
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Button(onClick = {
+                            if (sessionId != null) viewModel.completeRegistration(sessionId)
+                        }) {
+                            Text("Reintentar")
+                        }
+                    }
+                }
+
+                // CASO C: ÉXITO (Video min 2:00)
+                uiState.registrationComplete -> {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Éxito",
+                            tint = OsitoBluePrimary,
+                            modifier = Modifier.size(80.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "¡Registro Exitoso!",
+                            style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onErrorContainer
+                            color = Color.Black
                         )
-                    }
-                }
 
-                // Credentials Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
                         Text(
-                            text = "Tus credenciales de acceso:",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            text = "Tu cuenta ha sido creada.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.Gray
                         )
 
-                        // Username
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                        Spacer(modifier = Modifier.height(32.dp))
+
+                        // TARJETA DE CREDENCIALES
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F4F7)),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Username",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.padding(16.dp)) {
                                 Text(
-                                    text = "Usuario",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    "IMPORTANTE: Estas credenciales se muestran solo una vez. Guárdalas.",
+                                    color = Color(0xFFB42318),
+                                    fontSize = 12.sp,
+                                    lineHeight = 14.sp,
+                                    modifier = Modifier.padding(bottom = 16.dp)
                                 )
-                                Text(
-                                    text = username,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace
+
+                                CredentialRow(
+                                    label = "Usuario",
+                                    value = uiState.generatedUsername ?: "---",
+                                    icon = Icons.Default.Person,
+                                    context = context
                                 )
-                            }
-                            IconButton(
-                                onClick = {
-                                    clipboardManager.setText(AnnotatedString(username.trim()))
-                                    copied = true
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.ContentCopy,
-                                    contentDescription = "Copiar usuario"
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                CredentialRow(
+                                    label = "Contraseña",
+                                    value = uiState.generatedPassword ?: "---",
+                                    icon = Icons.Default.Lock,
+                                    context = context
                                 )
                             }
                         }
 
-                        Divider()
+                        Spacer(modifier = Modifier.height(40.dp))
 
-                        // Password
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                        Button(
+                            onClick = onLoginClicked,
+                            modifier = Modifier.fillMaxWidth().height(50.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = OsitoBluePrimary)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = "Password",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Contraseña",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = password,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace
-                                )
-                            }
-                            IconButton(
-                                onClick = {
-                                    clipboardManager.setText(AnnotatedString(password.trim()))
-                                    copied = true
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.ContentCopy,
-                                    contentDescription = "Copiar contraseña"
-                                )
-                            }
+                            Text("Ir a Iniciar Sesión")
                         }
                     }
                 }
-
-                if (copied) {
-                    Text(
-                        text = "✓ Copiado al portapapeles",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                // Instructions Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "Próximos pasos:",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "1. Guarda estas credenciales en un lugar seguro",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Text(
-                            text = "2. Inicia sesión con tu usuario y contraseña",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Text(
-                            text = "3. Configura la autenticación de dos factores (2FA)",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Text(
-                            text = "4. ¡Comienza a gestionar tus equipos!",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Continue Button
-                Button(
-                    onClick = onNavigateToLogin,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Text(
-                        "Ir a Iniciar Sesión",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                // Email reminder
-                Text(
-                    text = "También hemos enviado estas credenciales a tu email",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
             }
+        }
+    }
+}
+
+@Composable
+fun CredentialRow(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, context: Context) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(8.dp))
+            .padding(12.dp)
+    ) {
+        Icon(imageVector = icon, contentDescription = null, tint = OsitoBluePrimary)
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = label, fontSize = 12.sp, color = Color.Gray)
+            Text(text = value, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        }
+        IconButton(onClick = {
+            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText(label, value)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(context, "Copiado", Toast.LENGTH_SHORT).show()
+        }) {
+            Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Copiar", tint = Color.Gray)
         }
     }
 }

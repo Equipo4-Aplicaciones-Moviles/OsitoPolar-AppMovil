@@ -1,116 +1,27 @@
 package com.example.ositopolarapp.features.equipment.data.mapper
 
-import com.example.ositopolarapp.features.equipment.data.dto.CreateEquipmentRequest
 import com.example.ositopolarapp.features.equipment.data.dto.EquipmentDto
-import com.example.ositopolarapp.features.equipment.data.dto.LocationUpdateDto
 import com.example.ositopolarapp.features.equipment.domain.model.Equipment
-import com.example.ositopolarapp.features.equipment.domain.model.EquipmentStatus
-import com.example.ositopolarapp.features.equipment.domain.model.EquipmentType
-import com.example.ositopolarapp.features.equipment.domain.model.OwnershipType
-import com.example.ositopolarapp.features.equipment.domain.repository.LocationUpdate
 
-/**
- * Extension function to convert EquipmentDto to Equipment domain entity.
- */
-fun EquipmentDto.toEntity(): Equipment {
+fun EquipmentDto.toDomain(): Equipment {
     return Equipment(
-        id = id,
-        name = name,
-        type = when (type.uppercase()) {
-            "FREEZER" -> EquipmentType.FREEZER
-            "COLDROOM", "COLD_ROOM" -> EquipmentType.COLD_ROOM
-            "REFRIGERATOR" -> EquipmentType.REFRIGERATOR
-            else -> EquipmentType.REFRIGERATOR
-        },
-        model = model,
-        manufacturer = manufacturer,
-        serialNumber = serialNumber,
-        code = code,
-        cost = cost,
-        technicalDetails = technicalDetails ?: "",
-        currentTemperature = currentTemperature,
-        setTemperature = setTemperature,
-        optimalTemperatureMin = optimalTemperatureMin,
-        optimalTemperatureMax = optimalTemperatureMax,
-        locationName = locationName,
-        locationAddress = locationAddress,
-        locationLatitude = locationLatitude,
-        locationLongitude = locationLongitude,
-        energyConsumptionCurrent = energyConsumptionCurrent,
-        energyConsumptionUnit = energyConsumptionUnit,
-        energyConsumptionAverage = energyConsumptionAverage,
-        isPoweredOn = isPoweredOn,
-        status = when (status.uppercase()) {
-            "ACTIVE" -> EquipmentStatus.ACTIVE
-            "INACTIVE" -> EquipmentStatus.INACTIVE
-            "MAINTENANCE" -> EquipmentStatus.MAINTENANCE
-            "RETIRED" -> EquipmentStatus.RETIRED
-            else -> EquipmentStatus.ACTIVE
-        },
-        ownerId = ownerId,
-        ownerType = ownerType,
-        ownershipType = when (ownershipType.uppercase()) {
-            "OWNED" -> OwnershipType.OWNED
-            "RENTED" -> OwnershipType.RENTED
-            else -> OwnershipType.OWNED
-        },
-        createdAt = createdAt,
-        updatedAt = updatedAt,
-        notes = notes ?: ""
-    )
-}
-
-/**
- * Extension function to convert Equipment domain entity to CreateEquipmentRequest DTO.
- */
-fun Equipment.toCreateRequest(): CreateEquipmentRequest {
-    return CreateEquipmentRequest(
-        name = name,
-        type = when (type) {
-            EquipmentType.FREEZER -> "Freezer"
-            EquipmentType.COLD_ROOM -> "ColdRoom"
-            EquipmentType.REFRIGERATOR -> "Refrigerator"
-        },
-        model = model,
-        manufacturer = manufacturer,
-        serialNumber = serialNumber,
-        code = code,
-        cost = cost,
-        technicalDetails = technicalDetails.takeIf { it.isNotBlank() },
-        currentTemperature = currentTemperature,
-        setTemperature = setTemperature,
-        optimalTemperatureMin = optimalTemperatureMin,
-        optimalTemperatureMax = optimalTemperatureMax,
-        locationName = locationName,
-        locationAddress = locationAddress,
-        locationLatitude = locationLatitude,
-        locationLongitude = locationLongitude,
-        energyConsumptionCurrent = energyConsumptionCurrent,
-        energyConsumptionUnit = energyConsumptionUnit,
-        energyConsumptionAverage = energyConsumptionAverage,
-        isPoweredOn = isPoweredOn,
-        status = when (status) {
-            EquipmentStatus.ACTIVE -> "Active"
-            EquipmentStatus.INACTIVE -> "Inactive"
-            EquipmentStatus.MAINTENANCE -> "Maintenance"
-            EquipmentStatus.RETIRED -> "Retired"
-        },
-        ownershipType = when (ownershipType) {
-            OwnershipType.OWNED -> "Owned"
-            OwnershipType.RENTED -> "Rented"
-        },
-        ownerId = ownerId,
-        ownerType = ownerType
-    )
-}
-
-/**
- * Extension function to convert LocationUpdate to LocationUpdateDto.
- */
-fun LocationUpdate.toDto(): LocationUpdateDto {
-    return LocationUpdateDto(
-        address = address,
-        latitude = latitude,
-        longitude = longitude
+        id = this.id,
+        name = this.name,
+        // Si viene nulo, ponemos un valor por defecto
+        type = this.type ?: "Unknown",
+        model = this.model,
+        serialNumber = this.serialNumber,
+        // Mapeamos los nombres del DTO a los nombres del Dominio
+        brand = this.manufacturer,
+        location = this.locationName ?: "Sin ubicación",
+        address = this.locationAddress ?: "",
+        latitude = this.locationLatitude ?: 0.0,
+        longitude = this.locationLongitude ?: 0.0,
+        status = this.status ?: "Active",
+        temperature = this.currentTemperature ?: 0.0,
+        ownerId = this.ownerId ?: 0,
+        imageUrl = this.imageUrl,
+        energyConsumption = this.energyConsumptionCurrent ?: 0.0,
+        isPoweredOn = this.isPoweredOn ?: false
     )
 }

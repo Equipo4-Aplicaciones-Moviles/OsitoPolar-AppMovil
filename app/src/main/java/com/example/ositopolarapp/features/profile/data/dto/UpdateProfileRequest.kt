@@ -2,9 +2,7 @@ package com.example.ositopolarapp.features.profile.data.dto
 
 import com.google.gson.annotations.SerializedName
 
-/**
- * Request to update an existing profile
- */
+// SOLO debe estar esta clase. Si ves 'data class ProfileDto' aquí, es el error.
 data class UpdateProfileRequest(
     @SerializedName("firstName") val firstName: String,
     @SerializedName("lastName") val lastName: String,

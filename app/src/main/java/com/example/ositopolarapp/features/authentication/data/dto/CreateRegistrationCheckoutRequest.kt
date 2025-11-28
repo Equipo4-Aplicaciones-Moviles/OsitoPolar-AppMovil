@@ -16,26 +16,39 @@ data class RegistrationCheckoutResponse(
     @SerializedName("sessionId") val sessionId: String
 )
 
-// Lo que ENVIAMOS en el Paso 2
+// Lo que ENVIAMOS en el Paso 2 (Y usamos para guardar el formulario localmente)
 data class CompleteRegistrationRequest(
-    @SerializedName("sessionId") val sessionId: String,
-    @SerializedName("username") val username: String,
+    // Campos obligatorios para el Backend (pero pueden ser nulos al guardar localmente)
+    @SerializedName("sessionId") val sessionId: String? = null,
+
+    // Datos del Usuario
     @SerializedName("firstName") val firstName: String,
     @SerializedName("lastName") val lastName: String,
     @SerializedName("email") val email: String,
+    @SerializedName("username") val username: String? = null, // Puede ser nulo inicialmante
+
+    // Dirección
     @SerializedName("street") val street: String,
     @SerializedName("number") val number: String,
     @SerializedName("city") val city: String,
-    @SerializedName("postalCode") val postalCode: String,
     @SerializedName("country") val country: String,
-    @SerializedName("companyName") val companyName: String?,
-    @SerializedName("taxId") val taxId: String?
+
+    // IMPORTANTE: Mapeamos "zipCode" (código UI) a "postalCode" (Backend JSON)
+    @SerializedName("postalCode") val zipCode: String,
+
+    // Campos opcionales (Backend los pide pero la UI nueva quizás no)
+    @SerializedName("companyName") val companyName: String? = null,
+    @SerializedName("taxId") val taxId: String? = null,
+
+    // Campos EXTRA (Para que el ViewModel sepa qué plan se eligió al volver de Stripe)
+    val planId: Int? = null,
+    val userType: String? = null
 )
 
 // Lo que RECIBIMOS en el Paso 2 (credenciales generadas)
 data class CompleteRegistrationResponse(
     @SerializedName("username") val username: String,
-    @SerializedName("generatedPassword") val password: String,  // Backend usa "generatedPassword", no "password"
+    @SerializedName("generatedPassword") val password: String,
     @SerializedName("message") val message: String? = null,
     @SerializedName("success") val success: Boolean? = null,
     @SerializedName("userId") val userId: Int? = null,

@@ -1,217 +1,91 @@
 package com.example.ositopolarapp.features.equipment.data.repository
 
-import android.util.Log
 import com.example.ositopolarapp.features.equipment.data.api.EquipmentApiService
+import com.example.ositopolarapp.features.equipment.data.dto.CreateEquipmentRequest
 import com.example.ositopolarapp.features.equipment.data.dto.UpdateOperationsRequest
-import com.example.ositopolarapp.features.equipment.data.mapper.toCreateRequest
-import com.example.ositopolarapp.features.equipment.data.mapper.toDto
-import com.example.ositopolarapp.features.equipment.data.mapper.toEntity
+import com.example.ositopolarapp.features.equipment.data.mapper.toDomain
 import com.example.ositopolarapp.features.equipment.domain.model.Equipment
 import com.example.ositopolarapp.features.equipment.domain.repository.EquipmentRepository
-import com.example.ositopolarapp.features.equipment.domain.repository.LocationUpdate
-import retrofit2.HttpException
-import java.io.IOException
 
-/**
- * Implementation of EquipmentRepository.
- * Handles all equipment-related API calls and error handling.
- */
 class EquipmentRepositoryImpl(
     private val apiService: EquipmentApiService
 ) : EquipmentRepository {
 
-    companion object {
-        private const val TAG = "EquipmentRepository"
-    }
-
-    override suspend fun getAllEquipment(): Result<List<Equipment>> {
+    override suspend fun getAllEquipments(): Result<List<Equipment>> {
         return try {
-            val response = apiService.getAllEquipment()
-
+            val response = apiService.getAllEquipments()
             if (response.isSuccessful && response.body() != null) {
-                val equipmentList = response.body()!!.map { it.toEntity() }
-                Log.d(TAG, "Successfully fetched ${equipmentList.size} equipment items")
-                Result.success(equipmentList)
+                Result.success(response.body()!!.map { it.toDomain() })
             } else {
-                val errorMsg = "Failed to fetch equipment: ${response.message()}"
-                Log.e(TAG, errorMsg)
-                Result.failure(Exception(errorMsg))
+                Result.failure(Exception("Error al cargar equipos: ${response.code()}"))
             }
-        } catch (e: IOException) {
-            Log.e(TAG, "Network error while fetching equipment", e)
-            Result.failure(Exception("Network error. Please check your connection."))
-        } catch (e: HttpException) {
-            Log.e(TAG, "HTTP error while fetching equipment: ${e.code()}", e)
-            Result.failure(Exception("Server error: ${e.message()}"))
-        } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error while fetching equipment", e)
-            Result.failure(e)
-        }
+        } catch (e: Exception) { Result.failure(e) }
     }
 
-    override suspend fun getEquipmentByOwner(ownerId: Int): Result<List<Equipment>> {
+    override suspend fun getEquipmentById(id: Int): Result<Equipment> {
         return try {
-            val response = apiService.getEquipmentByOwner(ownerId)
-
+            val response = apiService.getEquipmentById(id)
             if (response.isSuccessful && response.body() != null) {
-                val equipmentList = response.body()!!.map { it.toEntity() }
-                Log.d(TAG, "Successfully fetched ${equipmentList.size} equipment items for owner $ownerId")
-                Result.success(equipmentList)
+                Result.success(response.body()!!.toDomain())
             } else {
-                val errorMsg = "Failed to fetch equipment for owner: ${response.message()}"
-                Log.e(TAG, errorMsg)
-                Result.failure(Exception(errorMsg))
+                Result.failure(Exception("Equipo no encontrado"))
             }
-        } catch (e: IOException) {
-            Log.e(TAG, "Network error while fetching equipment by owner", e)
-            Result.failure(Exception("Network error. Please check your connection."))
-        } catch (e: HttpException) {
-            Log.e(TAG, "HTTP error while fetching equipment by owner: ${e.code()}", e)
-            Result.failure(Exception("Server error: ${e.message()}"))
-        } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error while fetching equipment by owner", e)
-            Result.failure(e)
-        }
+        } catch (e: Exception) { Result.failure(e) }
     }
 
-    override suspend fun getEquipmentById(equipmentId: Int): Result<Equipment> {
+    override suspend fun createEquipment(
+        ownerId: Int, name: String, type: String, model: String,
+        serialNumber: String, brand: String, location: String,
+        address: String, latitude: Double, longitude: Double
+    ): Result<Equipment> {
         return try {
-            val response = apiService.getEquipmentById(equipmentId)
+            val request = CreateEquipmentRequest(
+                ownerId = ownerId,
+                name = name,
+                type = type,
+                model = model,
+                serialNumber = serialNumber,
+                manufacturer = brand,
+                locationName = location,
+                address = address,
+                latitude = latitude,
+                longitude = longitude
+            )
 
-            if (response.isSuccessful && response.body() != null) {
-                val equipment = response.body()!!.toEntity()
-                Log.d(TAG, "Successfully fetched equipment: ${equipment.name}")
-                Result.success(equipment)
-            } else {
-                val errorMsg = when (response.code()) {
-                    403 -> "You do not have permission to access this equipment"
-                    404 -> "Equipment not found"
-                    else -> "Failed to fetch equipment: ${response.message()}"
-                }
-                Log.e(TAG, errorMsg)
-                Result.failure(Exception(errorMsg))
-            }
-        } catch (e: IOException) {
-            Log.e(TAG, "Network error while fetching equipment by ID", e)
-            Result.failure(Exception("Network error. Please check your connection."))
-        } catch (e: HttpException) {
-            Log.e(TAG, "HTTP error while fetching equipment by ID: ${e.code()}", e)
-            Result.failure(Exception("Server error: ${e.message()}"))
-        } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error while fetching equipment by ID", e)
-            Result.failure(e)
-        }
-    }
-
-    override suspend fun createEquipment(equipment: Equipment): Result<Equipment> {
-        return try {
-            val request = equipment.toCreateRequest()
             val response = apiService.createEquipment(request)
 
             if (response.isSuccessful && response.body() != null) {
-                val createdEquipment = response.body()!!.toEntity()
-                Log.d(TAG, "Successfully created equipment: ${createdEquipment.name}")
-                Result.success(createdEquipment)
+                Result.success(response.body()!!.toDomain())
             } else {
-                val errorMsg = "Failed to create equipment: ${response.message()}"
-                Log.e(TAG, errorMsg)
-                Result.failure(Exception(errorMsg))
+                val msg = if (response.code() == 401) "Sesión inválida" else "Error: ${response.code()}"
+                Result.failure(Exception(msg))
             }
-        } catch (e: IOException) {
-            Log.e(TAG, "Network error while creating equipment", e)
-            Result.failure(Exception("Network error. Please check your connection."))
-        } catch (e: HttpException) {
-            Log.e(TAG, "HTTP error while creating equipment: ${e.code()}", e)
-            Result.failure(Exception("Server error: ${e.message()}"))
-        } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error while creating equipment", e)
-            Result.failure(e)
-        }
+        } catch (e: Exception) { Result.failure(e) }
     }
 
-    override suspend fun updateEquipment(equipmentId: Int, equipment: Equipment): Result<Equipment> {
+    override suspend fun updateOperations(id: Int, status: String, temperature: Double): Result<Equipment> {
         return try {
-            val request = equipment.toCreateRequest()
-            val response = apiService.updateEquipment(equipmentId, request)
-
-            if (response.isSuccessful && response.body() != null) {
-                val updatedEquipment = response.body()!!.toEntity()
-                Log.d(TAG, "Successfully updated equipment: ${updatedEquipment.name}")
-                Result.success(updatedEquipment)
-            } else {
-                val errorMsg = "Failed to update equipment: ${response.message()}"
-                Log.e(TAG, errorMsg)
-                Result.failure(Exception(errorMsg))
-            }
-        } catch (e: IOException) {
-            Log.e(TAG, "Network error while updating equipment", e)
-            Result.failure(Exception("Network error. Please check your connection."))
-        } catch (e: HttpException) {
-            Log.e(TAG, "HTTP error while updating equipment: ${e.code()}", e)
-            Result.failure(Exception("Server error: ${e.message()}"))
-        } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error while updating equipment", e)
-            Result.failure(e)
-        }
-    }
-
-    override suspend fun deleteEquipment(equipmentId: Int): Result<Unit> {
-        return try {
-            val response = apiService.deleteEquipment(equipmentId)
-
-            if (response.isSuccessful) {
-                Log.d(TAG, "Successfully deleted equipment ID: $equipmentId")
-                Result.success(Unit)
-            } else {
-                val errorMsg = "Failed to delete equipment: ${response.message()}"
-                Log.e(TAG, errorMsg)
-                Result.failure(Exception(errorMsg))
-            }
-        } catch (e: IOException) {
-            Log.e(TAG, "Network error while deleting equipment", e)
-            Result.failure(Exception("Network error. Please check your connection."))
-        } catch (e: HttpException) {
-            Log.e(TAG, "HTTP error while deleting equipment: ${e.code()}", e)
-            Result.failure(Exception("Server error: ${e.message()}"))
-        } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error while deleting equipment", e)
-            Result.failure(e)
-        }
-    }
-
-    override suspend fun updateEquipmentOperations(
-        equipmentId: Int,
-        temperature: Double?,
-        powerState: String?,
-        location: LocationUpdate?
-    ): Result<Equipment> {
-        return try {
+            // AHORA ESTO FUNCIONARÁ PORQUE EL DTO YA TIENE LOS CAMPOS CORRECTOS
             val request = UpdateOperationsRequest(
-                temperature = temperature,
-                powerState = powerState,
-                location = location?.toDto()
+                status = status,
+                currentTemperature = temperature
             )
 
-            val response = apiService.updateEquipmentOperations(equipmentId, request)
+            val response = apiService.updateOperations(id, request)
 
             if (response.isSuccessful && response.body() != null) {
-                val updatedEquipment = response.body()!!.toEntity()
-                Log.d(TAG, "Successfully updated equipment operations: ${updatedEquipment.name}")
-                Result.success(updatedEquipment)
+                Result.success(response.body()!!.toDomain())
             } else {
-                val errorMsg = "Failed to update equipment operations: ${response.message()}"
-                Log.e(TAG, errorMsg)
-                Result.failure(Exception(errorMsg))
+                Result.failure(Exception("Error al actualizar"))
             }
-        } catch (e: IOException) {
-            Log.e(TAG, "Network error while updating equipment operations", e)
-            Result.failure(Exception("Network error. Please check your connection."))
-        } catch (e: HttpException) {
-            Log.e(TAG, "HTTP error while updating equipment operations: ${e.code()}", e)
-            Result.failure(Exception("Server error: ${e.message()}"))
-        } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error while updating equipment operations", e)
-            Result.failure(e)
-        }
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
+    override suspend fun deleteEquipment(id: Int): Result<Unit> {
+        return try {
+            val response = apiService.deleteEquipment(id)
+            if (response.isSuccessful) Result.success(Unit)
+            else Result.failure(Exception("Error al eliminar"))
+        } catch (e: Exception) { Result.failure(e) }
     }
 }
