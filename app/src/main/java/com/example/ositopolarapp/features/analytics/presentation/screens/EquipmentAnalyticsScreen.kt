@@ -605,15 +605,16 @@ private fun PerformanceInsightsCard(equipment: Equipment) {
 
 @Composable
 private fun HealthScoreCard(healthScore: HealthScoreResponse) {
+    val status = healthScore.status ?: "Unknown"
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = when (healthScore.status) {
+            containerColor = when (status) {
                 "Excellent" -> Color(0xFF4CAF50).copy(alpha = 0.1f)
                 "Good" -> Color(0xFF8BC34A).copy(alpha = 0.1f)
                 "Fair" -> Color(0xFFFFC107).copy(alpha = 0.1f)
                 "Poor" -> Color(0xFFFF9800).copy(alpha = 0.1f)
-                else -> Color(0xFFF44336).copy(alpha = 0.1f) // Critical
+                else -> Color(0xFFF44336).copy(alpha = 0.1f) // Critical or Unknown
             }
         )
     ) {
@@ -633,7 +634,7 @@ private fun HealthScoreCard(healthScore: HealthScoreResponse) {
                 )
 
                 Surface(
-                    color = when (healthScore.status) {
+                    color = when (status) {
                         "Excellent" -> Color(0xFF4CAF50)
                         "Good" -> Color(0xFF8BC34A)
                         "Fair" -> Color(0xFFFFC107)
@@ -643,7 +644,7 @@ private fun HealthScoreCard(healthScore: HealthScoreResponse) {
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
-                        text = healthScore.status,
+                        text = status,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
@@ -662,7 +663,7 @@ private fun HealthScoreCard(healthScore: HealthScoreResponse) {
                     text = String.format("%.1f", healthScore.healthScore),
                     style = MaterialTheme.typography.displayLarge,
                     fontWeight = FontWeight.Bold,
-                    color = when (healthScore.status) {
+                    color = when (status) {
                         "Excellent" -> Color(0xFF4CAF50)
                         "Good" -> Color(0xFF8BC34A)
                         "Fair" -> Color(0xFFFFC107)
@@ -763,7 +764,7 @@ private fun AnomaliesCard(anomalies: AnomaliesResponse) {
                 )
             } else {
                 // Show each anomaly
-                anomalies.anomaliesDetected.forEach { anomaly ->
+                anomalies.anomaliesDetected?.forEach { anomaly ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
@@ -779,13 +780,14 @@ private fun AnomaliesCard(anomalies: AnomaliesResponse) {
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = anomaly.type,
+                                    text = anomaly.type ?: "Unknown",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
 
+                                val severity = anomaly.severity ?: "Low"
                                 Surface(
-                                    color = when (anomaly.severity) {
+                                    color = when (severity) {
                                         "Critical" -> Color(0xFFF44336)
                                         "High" -> Color(0xFFFF9800)
                                         "Medium" -> Color(0xFFFFC107)
@@ -794,10 +796,10 @@ private fun AnomaliesCard(anomalies: AnomaliesResponse) {
                                     shape = MaterialTheme.shapes.extraSmall
                                 ) {
                                     Text(
-                                        text = anomaly.severity,
+                                        text = severity,
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
-                                        color = when (anomaly.severity) {
+                                        color = when (severity) {
                                             "Critical" -> Color(0xFFF44336)
                                             "High" -> Color(0xFFFF9800)
                                             "Medium" -> Color(0xFFFFC107)
@@ -809,7 +811,7 @@ private fun AnomaliesCard(anomalies: AnomaliesResponse) {
                             }
 
                             Text(
-                                text = anomaly.description,
+                                text = anomaly.description ?: "",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -843,6 +845,10 @@ private fun AnomaliesCard(anomalies: AnomaliesResponse) {
 
 @Composable
 private fun CostAnalysisCard(costAnalysis: CostAnalysisResponse) {
+    val currentPeriod = costAnalysis.currentPeriod
+    val comparison = costAnalysis.comparison
+    val trend = comparison?.trend ?: "Stable"
+
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -867,13 +873,13 @@ private fun CostAnalysisCard(costAnalysis: CostAnalysisResponse) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "$${String.format("%.2f", costAnalysis.currentPeriod.totalCost)}",
+                        text = "$${String.format("%.2f", currentPeriod?.totalCost ?: 0.0)}",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "${String.format("%.2f", costAnalysis.currentPeriod.totalEnergyKwh)} kWh",
+                        text = "${String.format("%.2f", currentPeriod?.totalEnergyKwh ?: 0.0)} kWh",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -881,7 +887,7 @@ private fun CostAnalysisCard(costAnalysis: CostAnalysisResponse) {
 
                 // Trend indicator
                 Surface(
-                    color = when (costAnalysis.comparison.trend) {
+                    color = when (trend) {
                         "Decreasing" -> Color(0xFF4CAF50).copy(alpha = 0.2f)
                         "Increasing" -> Color(0xFFF44336).copy(alpha = 0.2f)
                         else -> Color(0xFF2196F3).copy(alpha = 0.2f)
@@ -893,23 +899,23 @@ private fun CostAnalysisCard(costAnalysis: CostAnalysisResponse) {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = when (costAnalysis.comparison.trend) {
+                            text = when (trend) {
                                 "Decreasing" -> "↓"
                                 "Increasing" -> "↑"
                                 else -> "→"
                             },
                             style = MaterialTheme.typography.headlineSmall,
-                            color = when (costAnalysis.comparison.trend) {
+                            color = when (trend) {
                                 "Decreasing" -> Color(0xFF4CAF50)
                                 "Increasing" -> Color(0xFFF44336)
                                 else -> Color(0xFF2196F3)
                             }
                         )
                         Text(
-                            text = costAnalysis.comparison.trend,
+                            text = trend,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
-                            color = when (costAnalysis.comparison.trend) {
+                            color = when (trend) {
                                 "Decreasing" -> Color(0xFF4CAF50)
                                 "Increasing" -> Color(0xFFF44336)
                                 else -> Color(0xFF2196F3)
@@ -933,10 +939,10 @@ private fun CostAnalysisCard(costAnalysis: CostAnalysisResponse) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "${if (costAnalysis.comparison.energyChangePercent > 0) "+" else ""}${String.format("%.1f%%", costAnalysis.comparison.energyChangePercent)}",
+                        text = "${if (comparison?.energyChangePercent ?: 0.0 > 0) "+" else ""}${String.format("%.1f%%", comparison?.energyChangePercent ?: 0.0)}",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (costAnalysis.comparison.energyChangePercent > 0) Color(0xFFF44336) else Color(0xFF4CAF50)
+                        color = if (comparison?.energyChangePercent ?: 0.0 > 0) Color(0xFFF44336) else Color(0xFF4CAF50)
                     )
                 }
 
@@ -947,10 +953,10 @@ private fun CostAnalysisCard(costAnalysis: CostAnalysisResponse) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "${if (costAnalysis.comparison.costChangePercent > 0) "+" else ""}${String.format("%.1f%%", costAnalysis.comparison.costChangePercent)}",
+                        text = "${if (comparison?.costChangePercent ?: 0.0 > 0) "+" else ""}${String.format("%.1f%%", comparison?.costChangePercent ?: 0.0)}",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (costAnalysis.comparison.costChangePercent > 0) Color(0xFFF44336) else Color(0xFF4CAF50)
+                        color = if (comparison?.costChangePercent ?: 0.0 > 0) Color(0xFFF44336) else Color(0xFF4CAF50)
                     )
                 }
             }
@@ -972,7 +978,7 @@ private fun CostAnalysisCard(costAnalysis: CostAnalysisResponse) {
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "$${String.format("%.2f", costAnalysis.comparison.estimatedMonthlyCost)}",
+                        text = "$${String.format("%.2f", comparison?.estimatedMonthlyCost ?: 0.0)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -992,10 +998,12 @@ private fun CostAnalysisCard(costAnalysis: CostAnalysisResponse) {
 
 @Composable
 private fun MaintenanceForecastCard(forecast: MaintenanceForecastResponse) {
+    val forecastData = forecast.forecast
+    val priority = forecastData?.priority ?: "Unknown"
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = when (forecast.forecast.priority) {
+            containerColor = when (priority) {
                 "Critical" -> Color(0xFFF44336).copy(alpha = 0.1f)
                 "High" -> Color(0xFFFF9800).copy(alpha = 0.1f)
                 "Medium" -> Color(0xFFFFC107).copy(alpha = 0.1f)
@@ -1019,7 +1027,7 @@ private fun MaintenanceForecastCard(forecast: MaintenanceForecastResponse) {
                 )
 
                 Surface(
-                    color = when (forecast.forecast.priority) {
+                    color = when (priority) {
                         "Critical" -> Color(0xFFF44336)
                         "High" -> Color(0xFFFF9800)
                         "Medium" -> Color(0xFFFFC107)
@@ -1028,7 +1036,7 @@ private fun MaintenanceForecastCard(forecast: MaintenanceForecastResponse) {
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
-                        text = forecast.forecast.priority,
+                        text = priority,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
@@ -1038,7 +1046,7 @@ private fun MaintenanceForecastCard(forecast: MaintenanceForecastResponse) {
             }
 
             // Next maintenance date
-            forecast.forecast.nextMaintenanceDate?.let { date ->
+            forecastData?.nextMaintenanceDate?.let { date ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1057,7 +1065,7 @@ private fun MaintenanceForecastCard(forecast: MaintenanceForecastResponse) {
                         )
                     }
 
-                    forecast.forecast.daysUntilMaintenance?.let { days ->
+                    forecastData.daysUntilMaintenance?.let { days ->
                         Surface(
                             color = MaterialTheme.colorScheme.secondaryContainer,
                             shape = MaterialTheme.shapes.small
@@ -1087,13 +1095,13 @@ private fun MaintenanceForecastCard(forecast: MaintenanceForecastResponse) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = forecast.forecast.confidence,
+                        text = forecastData?.confidence ?: "Unknown",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
 
-                forecast.forecast.estimatedCost?.let { cost ->
+                forecastData?.estimatedCost?.let { cost ->
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
                             text = "Costo Estimado",
@@ -1112,14 +1120,15 @@ private fun MaintenanceForecastCard(forecast: MaintenanceForecastResponse) {
 
             // Based on
             Text(
-                text = "Basado en: ${forecast.forecast.basedOn}",
+                text = "Basado en: ${forecastData?.basedOn ?: "N/A"}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             // Recommendations
-            if (forecast.recommendations.isNotEmpty()) {
-                Divider()
+            val recommendations = forecast.recommendations
+            if (!recommendations.isNullOrEmpty()) {
+                HorizontalDivider()
 
                 Text(
                     text = "Recomendaciones",
@@ -1127,7 +1136,7 @@ private fun MaintenanceForecastCard(forecast: MaintenanceForecastResponse) {
                     fontWeight = FontWeight.SemiBold
                 )
 
-                forecast.recommendations.forEach { recommendation ->
+                recommendations.forEach { recommendation ->
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
