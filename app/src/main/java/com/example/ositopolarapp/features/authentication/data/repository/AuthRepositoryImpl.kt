@@ -76,20 +76,53 @@ class AuthRepositoryImpl(
     override suspend fun createRegistrationCheckout(request: CreateRegistrationCheckoutRequest): Result<RegistrationCheckoutResponse> {
         return try {
             val response = apiService.createRegistrationCheckout(request)
-            if (response.isSuccessful && response.body() != null) Result.success(response.body()!!)
-            else Result.failure(Exception("Error checkout"))
-        } catch (e: Exception) { Result.failure(e) }
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                val errorMsg = when (response.code()) {
+                    400 -> "Datos inválidos para crear el checkout"
+                    404 -> "Endpoint de checkout no encontrado"
+                    500 -> "Error del servidor al crear checkout"
+                    else -> "Error al crear checkout: ${response.code()} - ${response.message()}"
+                }
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Error de conexión al crear checkout: ${e.message}", e))
+        }
     }
 
     override suspend fun completeRegistration(request: CompleteRegistrationRequest): Result<Pair<String, String>> {
         return try {
+            android.util.Log.d("AuthRepository", "Enviando completeRegistration al backend")
             val response = apiService.completeRegistration(request)
+            android.util.Log.d("AuthRepository", "Respuesta recibida - Código: ${response.code()}")
+
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
+                android.util.Log.d("AuthRepository", "Registro completado exitosamente")
                 Result.success(Pair(body.username, body.password))
             } else {
-                Result.failure(Exception(response.message()))
+                // Intentar leer el cuerpo del error
+                val errorBody = response.errorBody()?.string()
+                android.util.Log.e("AuthRepository", "Error ${response.code()}: $errorBody")
+
+                val errorMsg = when (response.code()) {
+                    400 -> {
+                        // Intentar extraer el mensaje específico del backend
+                        val specificError = errorBody ?: "Datos incompletos o inválidos"
+                        "Error 400: $specificError"
+                    }
+                    404 -> "Endpoint de completar registro no encontrado"
+                    409 -> "El usuario ya existe o el email está en uso"
+                    500 -> "Error del servidor al completar registro"
+                    else -> "Error al completar registro: ${response.code()} - ${response.message()}"
+                }
+                Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) { Result.failure(e) }
+        } catch (e: Exception) {
+            android.util.Log.e("AuthRepository", "Excepción al completar registro", e)
+            Result.failure(Exception("Error de conexión al completar registro: ${e.message}", e))
+        }
     }
 }
