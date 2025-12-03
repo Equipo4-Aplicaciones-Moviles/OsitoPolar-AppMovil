@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.ositopolarapp.features.equipment.domain.model.Equipment
 import com.example.ositopolarapp.features.servicerequests.presentation.state.ServiceRequestViewModel
+import com.example.ositopolarapp.ui.composables.outlinedTextFieldColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -196,7 +197,8 @@ private fun Step1Equipment(
                 value = selectedEquipment?.name ?: "", onValueChange = {}, readOnly = true,
                 label = { Text("Equipo *") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedEquipment) },
-                modifier = Modifier.fillMaxWidth().menuAnchor()
+                modifier = Modifier.fillMaxWidth().menuAnchor(),
+                colors = outlinedTextFieldColors()
             )
             ExposedDropdownMenu(expanded = expandedEquipment, onDismissRequest = { expandedEquipment = false }) {
                 equipmentList.forEach { equipment ->
@@ -220,7 +222,8 @@ private fun Step1Equipment(
             OutlinedTextField(
                 value = serviceType, onValueChange = {}, readOnly = true, label = { Text("Tipo de Servicio *") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedServiceType) },
-                modifier = Modifier.fillMaxWidth().menuAnchor()
+                modifier = Modifier.fillMaxWidth().menuAnchor(),
+                colors = outlinedTextFieldColors()
             )
             ExposedDropdownMenu(expanded = expandedServiceType, onDismissRequest = { expandedServiceType = false }) {
                 listOf("Diagnostic" to "Diagnóstico", "PreventiveMaintenance" to "Mantenimiento Preventivo").forEach { (valType, label) ->
@@ -229,9 +232,9 @@ private fun Step1Equipment(
             }
         }
 
-        OutlinedTextField(value = title, onValueChange = onTitleChange, label = { Text("Título *") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = description, onValueChange = onDescriptionChange, label = { Text("Descripción *") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
-        OutlinedTextField(value = issueDetails, onValueChange = onIssueDetailsChange, label = { Text("Detalles adicionales") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = title, onValueChange = onTitleChange, label = { Text("Título *") }, modifier = Modifier.fillMaxWidth(), colors = outlinedTextFieldColors())
+        OutlinedTextField(value = description, onValueChange = onDescriptionChange, label = { Text("Descripción *") }, modifier = Modifier.fillMaxWidth(), minLines = 3, colors = outlinedTextFieldColors())
+        OutlinedTextField(value = issueDetails, onValueChange = onIssueDetailsChange, label = { Text("Detalles adicionales") }, modifier = Modifier.fillMaxWidth(), colors = outlinedTextFieldColors())
     }
 }
 
@@ -265,6 +268,6 @@ private fun Step3Confirmation(
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Paso 3: Confirmación", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Text("Equipo: ${selectedEquipment?.name}")
-        OutlinedTextField(value = address, onValueChange = onAddressChange, label = { Text("Dirección *") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = address, onValueChange = onAddressChange, label = { Text("Dirección *") }, modifier = Modifier.fillMaxWidth(), colors = outlinedTextFieldColors())
     }
 }

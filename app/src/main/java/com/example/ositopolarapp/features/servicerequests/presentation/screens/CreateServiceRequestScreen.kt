@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.ositopolarapp.features.servicerequests.presentation.state.ServiceRequestViewModel
+import com.example.ositopolarapp.ui.composables.outlinedTextFieldColors
 
 /**
  * Create Service Request Screen
@@ -94,7 +95,8 @@ fun CreateServiceRequestScreen(
                 label = { Text("Título") },
                 placeholder = { Text("Ej: Falla en el compresor") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                colors = outlinedTextFieldColors()
             )
 
             // Description
@@ -104,7 +106,8 @@ fun CreateServiceRequestScreen(
                 label = { Text("Descripción") },
                 placeholder = { Text("Describe el problema...") },
                 modifier = Modifier.fillMaxWidth(),
-                minLines = 3
+                minLines = 3,
+                colors = outlinedTextFieldColors()
             )
 
             // Issue Details
@@ -113,7 +116,8 @@ fun CreateServiceRequestScreen(
                 onValueChange = { issueDetails = it },
                 label = { Text("Detalles adicionales (opcional)") },
                 modifier = Modifier.fillMaxWidth(),
-                minLines = 2
+                minLines = 2,
+                colors = outlinedTextFieldColors()
             )
 
             // Service Type Dropdown
@@ -130,7 +134,8 @@ fun CreateServiceRequestScreen(
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedServiceType) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .menuAnchor()
+                        .menuAnchor(),
+                    colors = outlinedTextFieldColors()
                 )
                 ExposedDropdownMenu(
                     expanded = expandedServiceType,
@@ -162,7 +167,8 @@ fun CreateServiceRequestScreen(
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedPriority) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .menuAnchor()
+                        .menuAnchor(),
+                    colors = outlinedTextFieldColors()
                 )
                 ExposedDropdownMenu(
                     expanded = expandedPriority,
@@ -205,7 +211,8 @@ fun CreateServiceRequestScreen(
                 label = { Text("Dirección del servicio") },
                 placeholder = { Text("Dirección donde se requiere el servicio") },
                 modifier = Modifier.fillMaxWidth(),
-                minLines = 2
+                minLines = 2,
+                colors = outlinedTextFieldColors()
             )
 
             Spacer(modifier = Modifier.height(8.dp))

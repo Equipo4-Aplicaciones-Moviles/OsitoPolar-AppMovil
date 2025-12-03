@@ -36,9 +36,10 @@ fun GeneratedCredentialsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    // 1. Al iniciar la pantalla, si tenemos SessionID, completamos el registro
-    LaunchedEffect(sessionId) {
-        if (sessionId != null && !uiState.registrationComplete) {
+    // 1. Al iniciar la pantalla, completamos el registro
+    // El sessionId viene de SharedPreferences (guardado cuando se creó el checkout)
+    LaunchedEffect(Unit) {
+        if (!uiState.registrationComplete && !uiState.isLoading) {
             viewModel.completeRegistration(sessionId)
         }
     }
@@ -96,7 +97,7 @@ fun GeneratedCredentialsScreen(
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                         Button(onClick = {
-                            if (sessionId != null) viewModel.completeRegistration(sessionId)
+                            viewModel.completeRegistration(sessionId)
                         }) {
                             Text("Reintentar")
                         }

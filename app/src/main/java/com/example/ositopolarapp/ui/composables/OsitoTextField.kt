@@ -42,7 +42,9 @@ fun OsitoTextField(
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             errorIndicatorColor = Color.Transparent,
-            focusedTextColor = Color(0xFF475467),
+            focusedTextColor = Color(0xFF1D2939),        // Texto oscuro cuando está enfocado
+            unfocusedTextColor = Color(0xFF344054),      // Texto oscuro cuando NO está enfocado
+            disabledTextColor = Color(0xFF667085),       // Texto gris cuando está deshabilitado
         ),
         shape = RoundedCornerShape(100.dp),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),

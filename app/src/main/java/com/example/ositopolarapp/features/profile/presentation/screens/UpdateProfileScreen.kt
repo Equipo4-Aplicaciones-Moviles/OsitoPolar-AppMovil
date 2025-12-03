@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 // IMPORTS CORRECTOS (Para no tener que escribir las clases aquí abajo)
 import com.example.ositopolarapp.features.profile.data.api.ProfileApiService
 import com.example.ositopolarapp.features.profile.data.dto.UpdateProfileRequest
+import com.example.ositopolarapp.ui.composables.outlinedTextFieldColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,27 +86,27 @@ fun UpdateProfileScreen(
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    OutlinedTextField(value = firstName, onValueChange = { firstName = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = firstName, onValueChange = { firstName = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth(), colors = outlinedTextFieldColors())
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(value = lastName, onValueChange = { lastName = it }, label = { Text("Apellido") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = lastName, onValueChange = { lastName = it }, label = { Text("Apellido") }, modifier = Modifier.fillMaxWidth(), colors = outlinedTextFieldColors())
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth(), colors = outlinedTextFieldColors())
 
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("Dirección", style = MaterialTheme.typography.titleMedium)
 
-                    OutlinedTextField(value = street, onValueChange = { street = it }, label = { Text("Calle") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = street, onValueChange = { street = it }, label = { Text("Calle") }, modifier = Modifier.fillMaxWidth(), colors = outlinedTextFieldColors())
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Row(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedTextField(value = number, onValueChange = { number = it }, label = { Text("Número") }, modifier = Modifier.weight(1f))
+                        OutlinedTextField(value = number, onValueChange = { number = it }, label = { Text("Número") }, modifier = Modifier.weight(1f), colors = outlinedTextFieldColors())
                         Spacer(modifier = Modifier.width(8.dp))
-                        OutlinedTextField(value = postalCode, onValueChange = { postalCode = it }, label = { Text("C. Postal") }, modifier = Modifier.weight(1f))
+                        OutlinedTextField(value = postalCode, onValueChange = { postalCode = it }, label = { Text("C. Postal") }, modifier = Modifier.weight(1f), colors = outlinedTextFieldColors())
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text("Ciudad") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text("Ciudad") }, modifier = Modifier.fillMaxWidth(), colors = outlinedTextFieldColors())
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(value = country, onValueChange = { country = it }, label = { Text("País") }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = country, onValueChange = { country = it }, label = { Text("País") }, modifier = Modifier.fillMaxWidth(), colors = outlinedTextFieldColors())
 
                     Spacer(modifier = Modifier.height(24.dp))
 
