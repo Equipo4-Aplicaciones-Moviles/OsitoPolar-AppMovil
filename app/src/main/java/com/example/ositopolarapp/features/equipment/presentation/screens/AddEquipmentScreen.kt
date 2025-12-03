@@ -68,11 +68,11 @@ fun AddEquipmentScreen(
     var optimalMin by remember { mutableStateOf("1.5") }
     var optimalMax by remember { mutableStateOf("2.5") }
 
-    // Location
+    // Location (default to Lima, Peru coordinates)
     var locationName by remember { mutableStateOf("") }
     var locationAddress by remember { mutableStateOf("") }
-    var latitude by remember { mutableStateOf("") }
-    var longitude by remember { mutableStateOf("") }
+    var latitude by remember { mutableStateOf("-12.0464") }
+    var longitude by remember { mutableStateOf("-77.0428") }
 
     // Energy
     var energyConsumptionCurrent by remember { mutableStateOf("1.5") }
@@ -414,13 +414,21 @@ fun AddEquipmentScreen(
                     if (name.isNotBlank() && model.isNotBlank() && manufacturer.isNotBlank() &&
                         locationName.isNotBlank() && locationAddress.isNotBlank()
                     ) {
+                        // Parse and validate latitude/longitude
+                        val parsedLatitude = latitude.toDoubleOrNull() ?: -12.0464
+                        val parsedLongitude = longitude.toDoubleOrNull() ?: -77.0428
+
+                        // Validate coordinate ranges
+                        val validLatitude = parsedLatitude.coerceIn(-90.0, 90.0)
+                        val validLongitude = parsedLongitude.coerceIn(-180.0, 180.0)
+
                         // Create Equipment object from form data
                         val equipment = com.example.ositopolarapp.features.equipment.domain.model.Equipment(
                             id = 0, // Backend will assign ID
                             name = name,
                             type = when (type) {
                                 "Freezer" -> com.example.ositopolarapp.features.equipment.domain.model.EquipmentType.FREEZER
-                                "Cold Room" -> com.example.ositopolarapp.features.equipment.domain.model.EquipmentType.COLD_ROOM
+                                "ColdRoom" -> com.example.ositopolarapp.features.equipment.domain.model.EquipmentType.COLD_ROOM
                                 else -> com.example.ositopolarapp.features.equipment.domain.model.EquipmentType.REFRIGERATOR
                             },
                             model = model,
@@ -435,8 +443,8 @@ fun AddEquipmentScreen(
                             optimalTemperatureMax = optimalMax.toDoubleOrNull() ?: 0.0,
                             locationName = locationName,
                             locationAddress = locationAddress,
-                            locationLatitude = latitude.toDoubleOrNull(),
-                            locationLongitude = longitude.toDoubleOrNull(),
+                            locationLatitude = validLatitude,
+                            locationLongitude = validLongitude,
                             energyConsumptionCurrent = energyConsumptionCurrent.toDoubleOrNull() ?: 0.0,
                             energyConsumptionUnit = energyConsumptionUnit,
                             energyConsumptionAverage = energyConsumptionAverage.toDoubleOrNull() ?: 0.0,

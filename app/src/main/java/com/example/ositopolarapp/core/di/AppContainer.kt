@@ -29,6 +29,8 @@ import com.example.ositopolarapp.core.config.ApiConfig
 import java.util.concurrent.TimeUnit
 import com.google.gson.GsonBuilder
 import java.nio.charset.StandardCharsets
+import okhttp3.logging.HttpLoggingInterceptor
+import android.util.Log
 
 class AppContainer(private val context: Context) {
 
@@ -55,10 +57,20 @@ class AppContainer(private val context: Context) {
     // Interceptor (sin dependencias al inicio)
     private val authInterceptor by lazy { AuthInterceptor() }
 
+    // HTTP Logging Interceptor para depuración
+    private val loggingInterceptor by lazy {
+        HttpLoggingInterceptor { message ->
+            Log.d("OkHttp", message)
+        }.apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+    }
+
     // Cliente HTTP
     private val httpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
+            .addInterceptor(loggingInterceptor)
             .connectTimeout(ApiConfig.CONNECT_TIMEOUT, TimeUnit.SECONDS)
             .readTimeout(ApiConfig.READ_TIMEOUT, TimeUnit.SECONDS)
             .writeTimeout(ApiConfig.WRITE_TIMEOUT, TimeUnit.SECONDS)
