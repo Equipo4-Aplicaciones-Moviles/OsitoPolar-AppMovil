@@ -259,4 +259,73 @@ class AppContainer(private val context: Context) {
             repository = rentalEquipmentRepository
         )
     }
+
+    // ============ SERVICE MARKETPLACE MODULE ============
+
+    // API Service
+    val serviceMarketplaceApiService: com.example.ositopolarapp.features.servicemarketplace.data.api.ServiceMarketplaceApiService by lazy {
+        retrofit.create(com.example.ositopolarapp.features.servicemarketplace.data.api.ServiceMarketplaceApiService::class.java)
+    }
+
+    // Repository
+    val serviceMarketplaceRepository: com.example.ositopolarapp.features.servicemarketplace.domain.repository.ServiceMarketplaceRepository by lazy {
+        com.example.ositopolarapp.features.servicemarketplace.data.repository.ServiceMarketplaceRepositoryImpl(
+            apiService = serviceMarketplaceApiService
+        )
+    }
+
+    // Use Cases
+    val getMarketplaceRequestsUseCase: com.example.ositopolarapp.features.servicemarketplace.domain.usecase.GetMarketplaceRequestsUseCase by lazy {
+        com.example.ositopolarapp.features.servicemarketplace.domain.usecase.GetMarketplaceRequestsUseCase(
+            repository = serviceMarketplaceRepository
+        )
+    }
+
+    val acceptServiceRequestUseCase: com.example.ositopolarapp.features.servicemarketplace.domain.usecase.AcceptServiceRequestUseCase by lazy {
+        com.example.ositopolarapp.features.servicemarketplace.domain.usecase.AcceptServiceRequestUseCase(
+            repository = serviceMarketplaceRepository
+        )
+    }
+
+    // ============ SERVICE PAYMENTS MODULE ============
+
+    // API Service
+    val servicePaymentApiService: com.example.ositopolarapp.features.servicepayments.data.api.ServicePaymentApiService by lazy {
+        retrofit.create(com.example.ositopolarapp.features.servicepayments.data.api.ServicePaymentApiService::class.java)
+    }
+
+    // Repository
+    val servicePaymentRepository: com.example.ositopolarapp.features.servicepayments.domain.repository.ServicePaymentRepository by lazy {
+        com.example.ositopolarapp.features.servicepayments.data.repository.ServicePaymentRepositoryImpl(
+            apiService = servicePaymentApiService
+        )
+    }
+
+    // Use Cases
+    val createServicePaymentUseCase: com.example.ositopolarapp.features.servicepayments.domain.usecase.CreateServicePaymentUseCase by lazy {
+        com.example.ositopolarapp.features.servicepayments.domain.usecase.CreateServicePaymentUseCase(
+            repository = servicePaymentRepository
+        )
+    }
+
+    // ============ MAINTENANCE MODULE ============
+
+    // API Service
+    val maintenanceApiService: com.example.ositopolarapp.features.maintenance.data.api.MaintenanceApiService by lazy {
+        retrofit.create(com.example.ositopolarapp.features.maintenance.data.api.MaintenanceApiService::class.java)
+    }
+
+    // Repository
+    val maintenanceRepository: com.example.ositopolarapp.features.maintenance.domain.repository.MaintenanceRepository by lazy {
+        com.example.ositopolarapp.features.maintenance.data.repository.MaintenanceRepositoryImpl(
+            apiService = maintenanceApiService
+        )
+    }
+
+    // Use Cases
+    val getMaintenanceForecastUseCase: com.example.ositopolarapp.features.maintenance.domain.usecase.GetMaintenanceForecastUseCase by lazy {
+        com.example.ositopolarapp.features.maintenance.domain.usecase.GetMaintenanceForecastUseCase(
+            repository = maintenanceRepository
+        )
+    }
 }

@@ -51,6 +51,7 @@ fun AppNavigation(
     val plansFactory = remember { PlansViewModelFactory(appContainer) }
     val analyticsFactory = remember { AnalyticsViewModelFactory(appContainer) }
     val rentalFactory = remember { RentalViewModelFactory(appContainer) }
+    val serviceMarketplaceFactory = remember { ServiceMarketplaceViewModelFactory(appContainer) }
 
     val mainVM = viewModel<MainViewModel>(factory = mainFactory)
     val authState by mainVM.authState.collectAsState()
@@ -572,6 +573,14 @@ fun AppNavigation(
                 equipmentList = equipmentUiState.equipmentList,
                 userId = currentUser?.id ?: 0,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // Service Marketplace (for Providers to accept service requests)
+        composable("service-marketplace") {
+            com.example.ositopolarapp.features.servicemarketplace.presentation.screens.ServiceMarketplaceScreen(
+                viewModel = viewModel(factory = serviceMarketplaceFactory),
+                onBackClick = { navController.popBackStack() }
             )
         }
     }
