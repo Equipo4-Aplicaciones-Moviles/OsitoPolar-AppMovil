@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.text.style.TextAlign
@@ -65,12 +66,42 @@ fun AppNavigation(
 
     // Handle deep link navigation
     LaunchedEffect(deepLinkUri) {
-        if (deepLinkUri != null && deepLinkUri.path == "/success") {
-            android.util.Log.d("AppNavigation", "Deep link detected, navigating to registration completion")
-            // Clear the back stack and navigate to registration-complete
-            navController.navigate("registration-complete") {
-                popUpTo("welcome") { inclusive = false }
-                launchSingleTop = true
+        if (deepLinkUri != null) {
+            val host = deepLinkUri.host
+            val path = deepLinkUri.path
+            android.util.Log.d("AppNavigation", "Deep link detected - host: $host, path: $path")
+
+            when (host) {
+                "registration" -> {
+                    if (path == "/success") {
+                        android.util.Log.d("AppNavigation", "Navigating to registration completion")
+                        navController.navigate("registration-complete") {
+                            popUpTo("welcome") { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    }
+                }
+                "rental" -> {
+                    val sessionId = deepLinkUri.getQueryParameter("session_id")
+                    when (path) {
+                        "/success" -> {
+                            android.util.Log.d("AppNavigation", "Rental payment SUCCESS - session: $sessionId")
+                            navController.navigate("rental-success?session_id=$sessionId") {
+                                popUpTo("dashboard") { inclusive = false }
+                                launchSingleTop = true
+                            }
+                            onDeepLinkProcessed()
+                        }
+                        "/cancel" -> {
+                            android.util.Log.d("AppNavigation", "Rental payment CANCELLED")
+                            navController.navigate("rental-cancel") {
+                                popUpTo("dashboard") { inclusive = false }
+                                launchSingleTop = true
+                            }
+                            onDeepLinkProcessed()
+                        }
+                    }
+                }
             }
         }
     }
@@ -582,6 +613,125 @@ fun AppNavigation(
                 viewModel = viewModel(factory = serviceMarketplaceFactory),
                 onBackClick = { navController.popBackStack() }
             )
+        }
+
+        // Rental Payment Success Screen
+        composable("rental-success?session_id={session_id}") { entry ->
+            val sessionId = entry.arguments?.getString("session_id")
+            val context = androidx.compose.ui.platform.LocalContext.current
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.foundation.layout.Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(24.dp)
+                ) {
+                    // Success Icon
+                    androidx.compose.material3.Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Filled.CheckCircle,
+                        contentDescription = "Éxito",
+                        tint = androidx.compose.ui.graphics.Color(0xFF4CAF50),
+                        modifier = Modifier.size(80.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "¡Pago Exitoso!",
+                        style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                        color = androidx.compose.ui.graphics.Color(0xFF4CAF50)
+                    )
+
+                    Text(
+                        text = "Tu renta de equipo ha sido procesada correctamente.",
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "El equipo ahora aparecerá en tu lista de equipos rentados.",
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = {
+                            navController.navigate("dashboard") {
+                                popUpTo("dashboard") { inclusive = true }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(0.8f)
+                    ) {
+                        Text("Ir al Dashboard")
+                    }
+                }
+            }
+        }
+
+        // Rental Payment Cancelled Screen
+        composable("rental-cancel") {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.foundation.layout.Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(24.dp)
+                ) {
+                    // Cancel Icon
+                    Icon(
+                        imageVector = Icons.Filled.Warning,
+                        contentDescription = "Cancelado",
+                        tint = androidx.compose.material3.MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(80.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Pago Cancelado",
+                        style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.error
+                    )
+
+                    Text(
+                        text = "El proceso de pago fue cancelado. No se realizó ningún cargo.",
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = {
+                            navController.navigate("dashboard") {
+                                popUpTo("dashboard") { inclusive = true }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(0.8f)
+                    ) {
+                        Text("Volver al Dashboard")
+                    }
+
+                    OutlinedButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier.fillMaxWidth(0.8f)
+                    ) {
+                        Text("Intentar de nuevo")
+                    }
+                }
+            }
         }
     }
 }

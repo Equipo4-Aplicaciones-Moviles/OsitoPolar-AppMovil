@@ -77,20 +77,29 @@ class MainActivity : ComponentActivity() {
             val uri = intent.data
             android.util.Log.d("MainActivity", "Deep link URI received: $uri")
 
-            if (uri != null &&
-                uri.scheme == "ositopolar" &&
-                uri.host == "registration"
-            ) {
-                android.util.Log.d("MainActivity", "Valid registration deep link detected")
-                android.util.Log.d("MainActivity", "URI path: ${uri.path}")
-                android.util.Log.d("MainActivity", "URI query params: ${uri.query}")
-
-                deepLinkUri.value = uri
-
-                // Evita que el intent se procese de nuevo
-                intent.data = null
+            if (uri != null && uri.scheme == "ositopolar") {
+                // Handle different deep link hosts
+                when (uri.host) {
+                    "registration" -> {
+                        android.util.Log.d("MainActivity", "Valid registration deep link detected")
+                        android.util.Log.d("MainActivity", "URI path: ${uri.path}")
+                        android.util.Log.d("MainActivity", "URI query params: ${uri.query}")
+                        deepLinkUri.value = uri
+                        intent.data = null
+                    }
+                    "rental" -> {
+                        android.util.Log.d("MainActivity", "Valid rental deep link detected")
+                        android.util.Log.d("MainActivity", "URI path: ${uri.path}")
+                        android.util.Log.d("MainActivity", "URI query params: ${uri.query}")
+                        deepLinkUri.value = uri
+                        intent.data = null
+                    }
+                    else -> {
+                        android.util.Log.w("MainActivity", "Unknown deep link host: ${uri.host}")
+                    }
+                }
             } else {
-                android.util.Log.w("MainActivity", "Deep link scheme or host mismatch. Scheme: ${uri?.scheme}, Host: ${uri?.host}")
+                android.util.Log.w("MainActivity", "Deep link scheme mismatch. Scheme: ${uri?.scheme}")
             }
         }
     }
