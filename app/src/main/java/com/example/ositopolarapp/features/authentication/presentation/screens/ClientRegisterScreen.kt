@@ -57,6 +57,7 @@ fun ClientRegisterScreen(
     val name = remember { mutableStateOf("") }
     val lastName = remember { mutableStateOf("") }
     val email = remember { mutableStateOf("") }
+    val username = remember { mutableStateOf("") }
 
     val street = remember { mutableStateOf("") }
     val number = remember { mutableStateOf("") }
@@ -65,7 +66,7 @@ fun ClientRegisterScreen(
     val country = remember { mutableStateOf("") }
 
     // Validaciones
-    val isStep1Valid = remember { derivedStateOf { name.value.isNotEmpty() && lastName.value.isNotEmpty() && email.value.contains('@') } }
+    val isStep1Valid = remember { derivedStateOf { name.value.isNotEmpty() && lastName.value.isNotEmpty() && email.value.contains('@') && username.value.isNotEmpty() } }
     val isStep2Valid = remember { derivedStateOf { street.value.isNotEmpty() && number.value.isNotEmpty() && city.value.isNotEmpty() && country.value.isNotEmpty() } }
 
     // 2. EFECTO: ABRIR NAVEGADOR PARA PAGAR (STRIPE)
@@ -102,6 +103,7 @@ fun ClientRegisterScreen(
                 firstName = name.value,
                 lastName = lastName.value,
                 email = email.value,
+                username = username.value,
                 street = street.value,
                 number = number.value,
                 zipCode = zipCode.value,
@@ -156,7 +158,7 @@ fun ClientRegisterScreen(
                 // Formularios
                 AnimatedContent(targetState = currentStep, label = "FormStepAnimation") { step ->
                     when (step) {
-                        RegistrationStep.PersonalInfo -> _buildStep1Form(name, lastName, email)
+                        RegistrationStep.PersonalInfo -> _buildStep1Form(name, lastName, email, username)
                         RegistrationStep.Address -> _buildStep2Form(street, number, zipCode, city, country)
                     }
                 }
@@ -237,7 +239,7 @@ fun _buildStepItem(step: RegistrationStep, currentStepNumber: Int) {
 }
 
 @Composable
-fun _buildStep1Form(name: MutableState<String>, lastName: MutableState<String>, email: MutableState<String>) {
+fun _buildStep1Form(name: MutableState<String>, lastName: MutableState<String>, email: MutableState<String>, username: MutableState<String>) {
     Column(modifier = Modifier.fillMaxWidth()) {
         OsitoLabel("Nombres")
         OsitoTextField(value = name.value, onValueChange = { name.value = it }, hintText = "Ej. Oliver", modifier = Modifier.fillMaxWidth())
@@ -247,6 +249,9 @@ fun _buildStep1Form(name: MutableState<String>, lastName: MutableState<String>, 
         Spacer(modifier = Modifier.height(20.dp))
         OsitoLabel("Email")
         OsitoTextField(value = email.value, onValueChange = { email.value = it }, hintText = "ejemplo@correo.com", keyboardType = KeyboardType.Email, modifier = Modifier.fillMaxWidth())
+        Spacer(modifier = Modifier.height(20.dp))
+        OsitoLabel("Nombre de Usuario")
+        OsitoTextField(value = username.value, onValueChange = { username.value = it }, hintText = "Ej. oliver_smith", modifier = Modifier.fillMaxWidth())
     }
 }
 

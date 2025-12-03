@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 // --- IMPORTANTE: Este es el DTO que daba problemas ---
 import com.example.ositopolarapp.features.authentication.data.dto.CompleteRegistrationRequest
 import com.example.ositopolarapp.features.authentication.presentation.state.RegistrationViewModel
+import com.example.ositopolarapp.ui.composables.outlinedTextFieldColors
 
 @Composable
 fun RegistrationScreen(
@@ -31,6 +32,7 @@ fun RegistrationScreen(
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
 
     var street by remember { mutableStateOf("") }
     var number by remember { mutableStateOf("") }
@@ -77,7 +79,8 @@ fun RegistrationScreen(
                 value = firstName,
                 onValueChange = { firstName = it },
                 label = { Text("Nombre") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = outlinedTextFieldColors()
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -85,7 +88,8 @@ fun RegistrationScreen(
                 value = lastName,
                 onValueChange = { lastName = it },
                 label = { Text("Apellido") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = outlinedTextFieldColors()
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -93,7 +97,17 @@ fun RegistrationScreen(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = outlinedTextFieldColors()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("Nombre de Usuario") },
+                modifier = Modifier.fillMaxWidth(),
+                colors = outlinedTextFieldColors()
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -101,7 +115,8 @@ fun RegistrationScreen(
                 value = street,
                 onValueChange = { street = it },
                 label = { Text("Calle") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = outlinedTextFieldColors()
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -110,14 +125,16 @@ fun RegistrationScreen(
                     value = number,
                     onValueChange = { number = it },
                     label = { Text("Número") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    colors = outlinedTextFieldColors()
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 OutlinedTextField(
                     value = postalCode,
                     onValueChange = { postalCode = it },
                     label = { Text("C. Postal") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    colors = outlinedTextFieldColors()
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -126,7 +143,8 @@ fun RegistrationScreen(
                 value = city,
                 onValueChange = { city = it },
                 label = { Text("Ciudad") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = outlinedTextFieldColors()
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -134,7 +152,8 @@ fun RegistrationScreen(
                 value = country,
                 onValueChange = { country = it },
                 label = { Text("País") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = outlinedTextFieldColors()
             )
 
             // Campos extra para Proveedores
@@ -144,14 +163,16 @@ fun RegistrationScreen(
                     value = companyName,
                     onValueChange = { companyName = it },
                     label = { Text("Nombre Empresa") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = outlinedTextFieldColors()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = taxId,
                     onValueChange = { taxId = it },
                     label = { Text("RUC / Tax ID") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = outlinedTextFieldColors()
                 )
             }
 
@@ -170,6 +191,7 @@ fun RegistrationScreen(
                         firstName = firstName,
                         lastName = lastName,
                         email = email,
+                        username = username,
                         street = street,
                         number = number,
                         city = city,
