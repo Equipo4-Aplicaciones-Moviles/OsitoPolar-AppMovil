@@ -26,14 +26,22 @@ class EquipmentRepositoryImpl(
 
     override suspend fun getAllEquipment(): Result<List<Equipment>> {
         return try {
+            Log.d(TAG, "Fetching all equipment from API...")
             val response = apiService.getAllEquipment()
+            Log.d(TAG, "API Response code: ${response.code()}, isSuccessful: ${response.isSuccessful}")
 
             if (response.isSuccessful && response.body() != null) {
-                val equipmentList = response.body()!!.map { it.toEntity() }
+                val dtoList = response.body()!!
+                Log.d(TAG, "Raw DTO list size: ${dtoList.size}")
+                dtoList.forEachIndexed { index, dto ->
+                    Log.d(TAG, "DTO[$index]: id=${dto.id}, name=${dto.name}, type=${dto.type}")
+                }
+                val equipmentList = dtoList.map { it.toEntity() }
                 Log.d(TAG, "Successfully fetched ${equipmentList.size} equipment items")
                 Result.success(equipmentList)
             } else {
-                val errorMsg = "Failed to fetch equipment: ${response.message()}"
+                val errorBody = response.errorBody()?.string()
+                val errorMsg = "Failed to fetch equipment: ${response.code()} - ${response.message()} - Body: $errorBody"
                 Log.e(TAG, errorMsg)
                 Result.failure(Exception(errorMsg))
             }
