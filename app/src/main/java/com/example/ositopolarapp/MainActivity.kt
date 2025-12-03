@@ -49,13 +49,21 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent) // Corregido para aceptar Intent nullable o non-null según versión
+        super.onNewIntent(intent)
+        setIntent(intent) // Importante: actualizar el intent actual
         handleIntent(intent)
     }
 
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == Intent.ACTION_VIEW) {
-            deepLinkUri = intent.data
+            val uri = intent.data
+            deepLinkUri = uri
+
+            // Log para debugging
+            android.util.Log.d("MainActivity", "Deep Link recibido: $uri")
+            uri?.getQueryParameter("session_id")?.let { sessionId ->
+                android.util.Log.d("MainActivity", "Session ID: $sessionId")
+            }
         }
     }
 }

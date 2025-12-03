@@ -69,13 +69,36 @@ fun AppNavigation(
     val authState by mainVM.authState.collectAsState()
     val currentUser by mainVM.currentUser.collectAsState()
 
+    // ViewModel compartido para todo el flujo de registro
+    val registrationViewModel = viewModel<com.example.ositopolarapp.features.authentication.presentation.state.RegistrationViewModel>(
+        factory = authFactory
+    )
+
+    // Manejar deep link de registro cuando llega de Stripe
+    LaunchedEffect(deepLinkUri) {
+        deepLinkUri?.let { uri ->
+            android.util.Log.d("AppNavigation", "Procesando deep link: $uri")
+
+            if (uri.scheme == "ositopolar" && uri.host == "registration") {
+                val sessionId = uri.getQueryParameter("session_id")
+                android.util.Log.d("AppNavigation", "Session ID extraído: $sessionId")
+
+                if (sessionId != null) {
+                    // Navegar a la pantalla de credenciales con el sessionId
+                    navController.navigate("registration_callback?session_id=$sessionId") {
+                        // Limpiar el back stack para evitar loops
+                        popUpTo("get_started") { inclusive = false }
+                    }
+                    onDeepLinkProcessed()
+                }
+            }
+        }
+    }
+
     val startDestination = when (authState) {
         AuthState.Loading -> "loading_route"
         AuthState.LoggedIn -> "dashboard"
         AuthState.LoggedOut -> "get_started"
-        AuthState.Loading -> TODO()
-        AuthState.LoggedIn -> TODO()
-        AuthState.LoggedOut -> TODO()
     }
 
     if (authState == AuthState.Loading) {
@@ -121,7 +144,7 @@ fun AppNavigation(
             arguments = listOf(navArgument("planId") { type = NavType.IntType }, navArgument("userType") { type = NavType.StringType })
         ) { entry ->
             ClientRegisterScreen(
-                viewModel = viewModel(factory = authFactory),
+                viewModel = registrationViewModel, // Usar ViewModel compartido
                 planId = entry.arguments?.getInt("planId") ?: 1,
                 userType = entry.arguments?.getString("userType") ?: "Owner",
                 onSignInClicked = { navController.navigate("login") }
@@ -133,7 +156,7 @@ fun AppNavigation(
             arguments = listOf(navArgument("sessionId") { type = NavType.StringType; nullable = true })
         ) { entry ->
             GeneratedCredentialsScreen(
-                viewModel = viewModel(factory = authFactory),
+                viewModel = registrationViewModel, // Usar el mismo ViewModel compartido
                 sessionId = entry.arguments?.getString("sessionId"),
                 onLoginClicked = { navController.navigate("client_login") { popUpTo(0) } }
             )

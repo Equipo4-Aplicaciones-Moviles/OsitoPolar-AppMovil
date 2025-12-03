@@ -21,11 +21,13 @@ data class RegistrationUiState(
     val registrationComplete: Boolean = false,
     val error: String? = null,
     val formData: CompleteRegistrationRequest? = null,
+    val backendSessionId: String? = null, // SessionId generado por el backend
     val generatedUsername: String? = null,
     val generatedPassword: String? = null
 )
 
 private const val PREF_FORM_DATA = "reg_form_data_cache"
+private const val PREF_SESSION_ID = "reg_backend_session_id"
 
 class RegistrationViewModel(
     private val createRegistrationCheckoutUseCase: CreateRegistrationCheckoutUseCase,
@@ -43,12 +45,15 @@ class RegistrationViewModel(
 
     private fun loadPendingFormData() {
         val json = prefs.getString(PREF_FORM_DATA, null)
+        val savedSessionId = prefs.getString(PREF_SESSION_ID, null)
+
         if (json != null) {
             try {
                 val pendingData = Gson().fromJson(json, CompleteRegistrationRequest::class.java)
-                _uiState.update { it.copy(formData = pendingData) }
+                _uiState.update { it.copy(formData = pendingData, backendSessionId = savedSessionId) }
             } catch (e: Exception) {
                 prefs.edit().remove(PREF_FORM_DATA).apply()
+                prefs.edit().remove(PREF_SESSION_ID).apply()
             }
         }
     }
@@ -64,7 +69,15 @@ class RegistrationViewModel(
 
             createRegistrationCheckoutUseCase(CreateRegistrationCheckoutUseCase.Params(planId, userType))
                 .onSuccess { response ->
-                    _uiState.update { it.copy(isLoading = false, checkoutUrl = response.checkoutUrl) }
+                    // Guardar el sessionId del backend en SharedPreferences
+                    prefs.edit().putString(PREF_SESSION_ID, response.sessionId).apply()
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            checkoutUrl = response.checkoutUrl,
+                            backendSessionId = response.sessionId
+                        )
+                    }
                 }
                 .onFailure { error ->
                     _uiState.update { it.copy(isLoading = false, error = error.message) }
@@ -72,33 +85,63 @@ class RegistrationViewModel(
         }
     }
 
-    fun completeRegistration(sessionIdFromUrl: String) {
+    fun completeRegistration(sessionIdFromUrl: String?) {
+        Log.d(TAG, "completeRegistration iniciado con sessionId desde URL: $sessionIdFromUrl")
+
         var formData = _uiState.value.formData
-        if (formData == null) {
+        var backendSessionId = _uiState.value.backendSessionId
+
+        Log.d(TAG, "FormData en memoria: ${formData != null}")
+        Log.d(TAG, "BackendSessionId en memoria: $backendSessionId")
+
+        if (formData == null || backendSessionId == null) {
             val json = prefs.getString(PREF_FORM_DATA, null)
+            val savedSessionId = prefs.getString(PREF_SESSION_ID, null)
+            Log.d(TAG, "Intentando cargar de SharedPreferences. FormData existe: ${json != null}, SessionId existe: ${savedSessionId != null}")
+
             if (json != null) {
                 try {
                     formData = Gson().fromJson(json, CompleteRegistrationRequest::class.java)
+                    Log.d(TAG, "FormData cargado exitosamente desde cache")
                 } catch (e: Exception) {
                     Log.e(TAG, "Error parsing json", e)
                 }
             }
+
+            backendSessionId = savedSessionId
         }
 
         if (formData == null) {
-            _uiState.update { it.copy(error = "No hay datos de registro guardados.") }
+            Log.e(TAG, "No hay datos de registro guardados")
+            _uiState.update { it.copy(error = "No hay datos de registro guardados. Por favor, completa el formulario nuevamente.") }
             return
         }
 
-        // Creamos el request final con el ID de sesión
-        val finalRequest = formData.copy(sessionId = sessionIdFromUrl)
+        if (backendSessionId == null) {
+            Log.e(TAG, "No hay sessionId del backend guardado")
+            _uiState.update { it.copy(error = "Sesión de pago no encontrada. Por favor, intenta registrarte nuevamente.") }
+            return
+        }
+
+        // Creamos el request final con el sessionId del BACKEND (no el de Stripe)
+        val finalRequest = formData.copy(sessionId = backendSessionId)
+        Log.d(TAG, "Request completo preparado: email=${finalRequest.email}, sessionId=${finalRequest.sessionId}")
+
+        // Log del JSON completo para debugging
+        val requestJson = Gson().toJson(finalRequest)
+        Log.d(TAG, "JSON que se enviará al backend:")
+        Log.d(TAG, requestJson)
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
+            Log.d(TAG, "Llamando a completeRegistrationUseCase...")
 
             completeRegistrationUseCase(finalRequest)
                 .onSuccess { credentials ->
+                    Log.d(TAG, "Registro completado exitosamente! Username: ${credentials.first}")
+                    // Limpiar cache
                     prefs.edit().remove(PREF_FORM_DATA).apply()
+                    prefs.edit().remove(PREF_SESSION_ID).apply()
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -109,6 +152,7 @@ class RegistrationViewModel(
                     }
                 }
                 .onFailure { error ->
+                    Log.e(TAG, "Error al completar registro: ${error.message}", error)
                     _uiState.update { it.copy(isLoading = false, error = error.message) }
                 }
         }
