@@ -25,7 +25,7 @@ data class CompleteRegistrationRequest(
     @SerializedName("firstName") val firstName: String,
     @SerializedName("lastName") val lastName: String,
     @SerializedName("email") val email: String,
-    @SerializedName("username") val username: String? = null, // Puede ser nulo inicialmante
+    @SerializedName("username") val username: String, // Campo obligatorio
 
     // Dirección
     @SerializedName("street") val street: String,
@@ -40,9 +40,9 @@ data class CompleteRegistrationRequest(
     @SerializedName("companyName") val companyName: String? = null,
     @SerializedName("taxId") val taxId: String? = null,
 
-    // Campos EXTRA (Para que el ViewModel sepa qué plan se eligió al volver de Stripe)
-    val planId: Int? = null,
-    val userType: String? = null
+    // Campos EXTRA transient (Para que el ViewModel sepa qué plan se eligió, pero NO se envían al backend)
+    @Transient val planId: Int? = null,
+    @Transient val userType: String? = null
 )
 
 // Lo que RECIBIMOS en el Paso 2 (credenciales generadas)

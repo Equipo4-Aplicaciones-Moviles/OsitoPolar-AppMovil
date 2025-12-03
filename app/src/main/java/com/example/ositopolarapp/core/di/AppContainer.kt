@@ -74,12 +74,19 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
             .build()
     }
 
+    // Configuración de Gson: no serializar nulls y campos @Transient
+    private val gson: com.google.gson.Gson by lazy {
+        com.google.gson.GsonBuilder()
+            .excludeFieldsWithModifiers(java.lang.reflect.Modifier.TRANSIENT)
+            .create()
+    }
+
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
-            // Usa 10.0.2.2 para emulador Android, o tu IP local para dispositivo físico
-            .baseUrl("http://10.0.2.2:8080/api/v1/")
+            // Backend desplegado en Azure
+            .baseUrl("https://ositopolar-api.grayground-d49718c1.eastus.azurecontainerapps.io/api/v1/")
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 
