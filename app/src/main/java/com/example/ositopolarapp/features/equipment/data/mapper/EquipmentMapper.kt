@@ -62,6 +62,7 @@ fun EquipmentDto.toEntity(): Equipment {
 
 /**
  * Extension function to convert Equipment domain entity to CreateEquipmentRequest DTO.
+ * Note: OwnerId is set automatically from JWT token by the backend - we don't send it.
  */
 fun Equipment.toCreateRequest(): CreateEquipmentRequest {
     return CreateEquipmentRequest(
@@ -76,31 +77,23 @@ fun Equipment.toCreateRequest(): CreateEquipmentRequest {
         serialNumber = serialNumber,
         code = code,
         cost = cost,
-        technicalDetails = technicalDetails.takeIf { it.isNotBlank() },
+        technicalDetails = technicalDetails.ifBlank { "" },
         currentTemperature = currentTemperature,
         setTemperature = setTemperature,
         optimalTemperatureMin = optimalTemperatureMin,
         optimalTemperatureMax = optimalTemperatureMax,
         locationName = locationName,
         locationAddress = locationAddress,
-        locationLatitude = locationLatitude,
-        locationLongitude = locationLongitude,
+        locationLatitude = locationLatitude ?: 0.0,
+        locationLongitude = locationLongitude ?: 0.0,
         energyConsumptionCurrent = energyConsumptionCurrent,
         energyConsumptionUnit = energyConsumptionUnit,
         energyConsumptionAverage = energyConsumptionAverage,
-        isPoweredOn = isPoweredOn,
-        status = when (status) {
-            EquipmentStatus.ACTIVE -> "Active"
-            EquipmentStatus.INACTIVE -> "Inactive"
-            EquipmentStatus.MAINTENANCE -> "Maintenance"
-            EquipmentStatus.RETIRED -> "Retired"
-        },
         ownershipType = when (ownershipType) {
             OwnershipType.OWNED -> "Owned"
             OwnershipType.RENTED -> "Rented"
         },
-        ownerId = ownerId,
-        ownerType = ownerType
+        notes = notes
     )
 }
 

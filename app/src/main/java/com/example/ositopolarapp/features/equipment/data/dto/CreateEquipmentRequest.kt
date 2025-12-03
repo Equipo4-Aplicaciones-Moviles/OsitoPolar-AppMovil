@@ -5,6 +5,8 @@ import com.google.gson.annotations.SerializedName
 /**
  * Request DTO for creating new equipment.
  * Matches backend API POST /api/v1/equipments request body.
+ *
+ * Note: OwnerId is automatically set from the authenticated user JWT token - do not send it.
  */
 data class CreateEquipmentRequest(
     @SerializedName("name")
@@ -29,7 +31,7 @@ data class CreateEquipmentRequest(
     val cost: Double,
 
     @SerializedName("technicalDetails")
-    val technicalDetails: String? = null,
+    val technicalDetails: String = "",
 
     @SerializedName("currentTemperature")
     val currentTemperature: Double,
@@ -50,10 +52,10 @@ data class CreateEquipmentRequest(
     val locationAddress: String,
 
     @SerializedName("locationLatitude")
-    val locationLatitude: Double?,
+    val locationLatitude: Double,
 
     @SerializedName("locationLongitude")
-    val locationLongitude: Double?,
+    val locationLongitude: Double,
 
     @SerializedName("energyConsumptionCurrent")
     val energyConsumptionCurrent: Double,
@@ -64,18 +66,9 @@ data class CreateEquipmentRequest(
     @SerializedName("energyConsumptionAverage")
     val energyConsumptionAverage: Double,
 
-    @SerializedName("isPoweredOn")
-    val isPoweredOn: Boolean,
-
-    @SerializedName("status")
-    val status: String,
-
     @SerializedName("ownershipType")
     val ownershipType: String,
 
-    @SerializedName("ownerId")
-    val ownerId: Int,
-
-    @SerializedName("ownerType")
-    val ownerType: String
+    @SerializedName("notes")
+    val notes: String = ""
 )

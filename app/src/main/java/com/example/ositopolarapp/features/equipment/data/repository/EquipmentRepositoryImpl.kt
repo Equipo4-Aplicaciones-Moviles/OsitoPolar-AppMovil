@@ -106,6 +106,7 @@ class EquipmentRepositoryImpl(
     override suspend fun createEquipment(equipment: Equipment): Result<Equipment> {
         return try {
             val request = equipment.toCreateRequest()
+            Log.d(TAG, "Creating equipment with request: $request")
             val response = apiService.createEquipment(request)
 
             if (response.isSuccessful && response.body() != null) {
@@ -113,9 +114,11 @@ class EquipmentRepositoryImpl(
                 Log.d(TAG, "Successfully created equipment: ${createdEquipment.name}")
                 Result.success(createdEquipment)
             } else {
-                val errorMsg = "Failed to create equipment: ${response.message()}"
+                // Get detailed error from response body
+                val errorBody = response.errorBody()?.string()
+                val errorMsg = "Failed to create equipment: ${response.code()} - ${response.message()} - Body: $errorBody"
                 Log.e(TAG, errorMsg)
-                Result.failure(Exception(errorMsg))
+                Result.failure(Exception(errorBody ?: response.message()))
             }
         } catch (e: IOException) {
             Log.e(TAG, "Network error while creating equipment", e)
