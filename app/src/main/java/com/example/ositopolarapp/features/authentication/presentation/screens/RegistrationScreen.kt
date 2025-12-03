@@ -9,14 +9,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.foundation.clickable
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable // Importar para guardar estado en rotación
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.example.ositopolarapp.features.authentication.data.dto.CompleteRegistrationRequest
+import com.example.ositopolarapp.features.authentication.presentation.components.TermsAndConditionsDialog
 import com.example.ositopolarapp.features.authentication.presentation.state.RegistrationViewModel
 
 @Composable
@@ -42,6 +48,10 @@ fun RegistrationScreen(
     var city by rememberSaveable { mutableStateOf("") }
     var postalCode by rememberSaveable { mutableStateOf("") }
     var country by rememberSaveable { mutableStateOf("") }
+
+    // Estado para términos y condiciones
+    var termsAccepted by rememberSaveable { mutableStateOf(false) }
+    var showTermsDialog by remember { mutableStateOf(false) }
 
     // --- Manejo de Efectos (Reacciones al Estado) ---
 
@@ -130,9 +140,42 @@ fun RegistrationScreen(
 
             Spacer(Modifier.height(24.dp))
 
+            // --- Términos y Condiciones ---
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = termsAccepted,
+                    onCheckedChange = { termsAccepted = it }
+                )
+
+                Text(
+                    text = buildAnnotatedString {
+                        append("He leído y acepto los ")
+                        withStyle(
+                            style = SpanStyle(
+                                color = MaterialTheme.colorScheme.primary,
+                                textDecoration = TextDecoration.Underline
+                            )
+                        ) {
+                            append("Términos y Condiciones")
+                        }
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.clickable { showTermsDialog = true }
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
             // --- Botón de Envío ---
             Button(
                 onClick = {
+                    if (!termsAccepted) {
+                        Toast.makeText(context, "Debes aceptar los Términos y Condiciones.", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
                     if (username.isBlank() || email.isBlank() || firstName.isBlank() || lastName.isBlank()) {
                         Toast.makeText(context, "Completa los campos de nombre y email.", Toast.LENGTH_SHORT).show()
                         return@Button
@@ -166,6 +209,19 @@ fun RegistrationScreen(
             ) {
                 CircularProgressIndicator()
             }
+        }
+
+        // --- Diálogo de Términos y Condiciones ---
+        if (showTermsDialog) {
+            TermsAndConditionsDialog(
+                onAccept = {
+                    termsAccepted = true
+                    showTermsDialog = false
+                },
+                onDismiss = {
+                    showTermsDialog = false
+                }
+            )
         }
     }
 }
