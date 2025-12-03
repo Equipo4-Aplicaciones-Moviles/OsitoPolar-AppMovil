@@ -1,10 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">10.0.2.2</domain>
+    <!-- Configuración base: Confiar en certificados del sistema para HTTPS -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Dominios de Azure (HTTPS) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">ositopolar-api.grayground-d49718c1.eastus.azurecontainerapps.io</domain>
     </domain-config>
 
+    <!-- Configuración para desarrollo local (solo para testing) -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">192.168.18.62</domain> <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">192.168.18.62</domain>
+        <domain includeSubdomains="true">localhost</domain>
     </domain-config>
 </network-security-config>

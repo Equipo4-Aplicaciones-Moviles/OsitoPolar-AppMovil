@@ -21,7 +21,7 @@ object ApiConfig {
      * - Production: "https://api.ositopolar.com/api/v1/"
      * - Azure Deployed: "https://ositopolar-api.grayground-d49718c1.eastus.azurecontainerapps.io/api/v1/"
      */
-    const val BASE_URL = "http://192.168.18.62:8080/api/v1/"
+    const val BASE_URL = "https://ositopolar-api.grayground-d49718c1.eastus.azurecontainerapps.io/api/v1/"
 
     /**
      * Admin Key for administrative operations
@@ -36,11 +36,16 @@ object ApiConfig {
      */
     object Endpoints {
         // Authentication
-        const val AUTH = "auth/"
-        const val LOGIN = "auth/login"
-        const val REGISTER_CHECKOUT = "auth/registration/checkout"
-        const val COMPLETE_REGISTRATION = "auth/registration/complete"
-        const val VERIFY_2FA = "auth/verify-2fa"
+        const val AUTH = "authentication/"
+        const val LOGIN = "authentication/sign-in"
+        const val REGISTER_CHECKOUT = "authentication/create-registration-checkout"
+        const val COMPLETE_REGISTRATION = "authentication/complete-registration"
+        const val REGISTER = "authentication/register"
+        const val VERIFY_2FA = "authentication/verify-2fa"
+        const val INITIATE_2FA = "authentication/initiate-2fa"
+        const val ENABLE_2FA = "authentication/enable-2fa"
+        const val DISABLE_2FA = "authentication/disable-2fa"
+        const val TWO_FA_STATUS = "authentication/2fa-status"
 
         // Equipment
         const val EQUIPMENT = "equipments/"

@@ -8,8 +8,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    // TODO: Mueve esta URL a tu build.gradle (BuildConfig) o .env
-    private const val BASE_URL = "http://10.0.2.2:8080/" // 10.0.2.2 es el "localhost" para el emulador
+    // URL del backend desplegado en Azure
+    private const val BASE_URL = "https://ositopolar-api.grayground-d49718c1.eastus.azurecontainerapps.io/"
 
     // Crea un interceptor para ver las llamadas de red en el Logcat (¡súper útil!)
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
