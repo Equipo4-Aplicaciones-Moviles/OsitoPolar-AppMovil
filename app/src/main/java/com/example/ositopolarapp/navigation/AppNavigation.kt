@@ -577,9 +577,12 @@ fun AppNavigation(
                             onCheckoutSuccess = {
                                 // The Stripe checkout URL will be opened automatically via LaunchedEffect above
                             },
-                            onCreateRentalRequest = { equipmentId, months ->
+                            onCreateRentalRequest = { eqId, months ->
                                 // Call ViewModel to create rental request and get Stripe checkout URL
-                                rentalViewModel.createRentalRequest(equipmentId, months)
+                                // Pass userId for rental completion after payment
+                                val userId = currentUser?.id ?: 0
+                                android.util.Log.d("RentalCheckout", "Creating rental request: equipmentId=$eqId, months=$months, userId=$userId")
+                                rentalViewModel.createRentalRequest(eqId, months, userId)
                             }
                         )
                     }
@@ -615,10 +618,54 @@ fun AppNavigation(
             )
         }
 
-        // Rental Payment Success Screen
+        // Rental Payment Success Screen - Completes the rental on the backend
         composable("rental-success?session_id={session_id}") { entry ->
             val sessionId = entry.arguments?.getString("session_id")
             val context = androidx.compose.ui.platform.LocalContext.current
+
+            // Get the rental ViewModel to complete the rental
+            val rentalViewModel = viewModel<com.example.ositopolarapp.features.rentals.presentation.viewmodel.RentalCatalogViewModel>(
+                factory = rentalFactory
+            )
+            val rentalUiState by rentalViewModel.uiState.collectAsState()
+
+            // Track if we've already triggered completion
+            var hasTriggeredCompletion by remember { mutableStateOf(false) }
+
+            // Complete the rental when this screen loads
+            LaunchedEffect(sessionId) {
+                if (sessionId != null && !hasTriggeredCompletion) {
+                    hasTriggeredCompletion = true
+                    android.util.Log.d("RentalSuccess", "Completing rental with session_id: $sessionId")
+                    rentalViewModel.completeRental(sessionId)
+                } else if (sessionId == null) {
+                    android.util.Log.e("RentalSuccess", "session_id is null!")
+                }
+            }
+
+            // Navigate to dashboard on success
+            LaunchedEffect(rentalUiState.rentalComplete) {
+                if (rentalUiState.rentalComplete) {
+                    android.util.Log.i("RentalSuccess", "Rental completed successfully, navigating to dashboard")
+                    android.widget.Toast.makeText(
+                        context,
+                        "¡Renta completada exitosamente!",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                    rentalViewModel.resetRentalCompletionState()
+                    navController.navigate("dashboard") {
+                        popUpTo("dashboard") { inclusive = true }
+                    }
+                }
+            }
+
+            // Show error toast if completion fails
+            LaunchedEffect(rentalUiState.rentalCompletionError) {
+                rentalUiState.rentalCompletionError?.let { error ->
+                    android.util.Log.e("RentalSuccess", "Rental completion error: $error")
+                    android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
 
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -629,49 +676,118 @@ fun AppNavigation(
                     verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp),
                     modifier = Modifier.padding(24.dp)
                 ) {
-                    // Success Icon
-                    androidx.compose.material3.Icon(
-                        imageVector = androidx.compose.material.icons.Icons.Filled.CheckCircle,
-                        contentDescription = "Éxito",
-                        tint = androidx.compose.ui.graphics.Color(0xFF4CAF50),
-                        modifier = Modifier.size(80.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "¡Pago Exitoso!",
-                        style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
-                        color = androidx.compose.ui.graphics.Color(0xFF4CAF50)
-                    )
-
-                    Text(
-                        text = "Tu renta de equipo ha sido procesada correctamente.",
-                        style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center,
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "El equipo ahora aparecerá en tu lista de equipos rentados.",
-                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Button(
-                        onClick = {
-                            navController.navigate("dashboard") {
-                                popUpTo("dashboard") { inclusive = true }
+                    when {
+                        rentalUiState.isLoading -> {
+                            // Loading state while completing rental
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Completando tu renta...",
+                                style = androidx.compose.material3.MaterialTheme.typography.headlineSmall
+                            )
+                            Text(
+                                text = "Por favor espera mientras procesamos tu pago",
+                                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            LinearProgressIndicator(
+                                modifier = Modifier.fillMaxWidth(0.7f)
+                            )
+                        }
+                        rentalUiState.rentalCompletionError != null -> {
+                            // Error state
+                            Icon(
+                                imageVector = Icons.Filled.Warning,
+                                contentDescription = "Error",
+                                tint = androidx.compose.material3.MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(64.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Error al completar la renta",
+                                style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.error
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = rentalUiState.rentalCompletionError ?: "Error desconocido",
+                                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            androidx.compose.foundation.layout.Row(
+                                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = {
+                                        // Retry completion
+                                        sessionId?.let {
+                                            hasTriggeredCompletion = false
+                                            rentalViewModel.resetRentalCompletionState()
+                                        }
+                                    }
+                                ) {
+                                    Text("Reintentar")
+                                }
+                                OutlinedButton(
+                                    onClick = {
+                                        navController.navigate("dashboard") {
+                                            popUpTo("dashboard") { inclusive = true }
+                                        }
+                                    }
+                                ) {
+                                    Text("Ir al Dashboard")
+                                }
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth(0.8f)
-                    ) {
-                        Text("Ir al Dashboard")
+                        }
+                        else -> {
+                            // Initial/Success state
+                            androidx.compose.material3.Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Filled.CheckCircle,
+                                contentDescription = "Éxito",
+                                tint = androidx.compose.ui.graphics.Color(0xFF4CAF50),
+                                modifier = Modifier.size(80.dp)
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = "¡Pago Exitoso!",
+                                style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                                color = androidx.compose.ui.graphics.Color(0xFF4CAF50)
+                            )
+
+                            Text(
+                                text = "Tu renta de equipo ha sido procesada correctamente.",
+                                style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+                                textAlign = TextAlign.Center,
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = "El equipo ahora aparecerá en tu lista de equipos rentados.",
+                                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center,
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            Button(
+                                onClick = {
+                                    navController.navigate("dashboard") {
+                                        popUpTo("dashboard") { inclusive = true }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(0.8f)
+                            ) {
+                                Text("Ir al Dashboard")
+                            }
+                        }
                     }
                 }
             }

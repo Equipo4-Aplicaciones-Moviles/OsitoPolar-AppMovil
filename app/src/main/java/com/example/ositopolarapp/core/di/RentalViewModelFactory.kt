@@ -6,7 +6,8 @@ import com.example.ositopolarapp.features.rentals.presentation.viewmodel.RentalC
 
 /**
  * ViewModelFactory for Rental module.
- * Handles creation of RentalCatalogViewModel.
+ * Handles creation of RentalCatalogViewModel with all required dependencies
+ * including PaymentApiService and SharedPreferences for rental completion.
  */
 class RentalViewModelFactory(
     private val container: AppContainer
@@ -18,7 +19,9 @@ class RentalViewModelFactory(
             modelClass.isAssignableFrom(RentalCatalogViewModel::class.java) -> {
                 RentalCatalogViewModel(
                     getRentalEquipmentUseCase = container.getRentalEquipmentUseCase,
-                    createRentalRequestUseCase = container.createRentalRequestUseCase
+                    createRentalRequestUseCase = container.createRentalRequestUseCase,
+                    paymentApiService = container.paymentApiService,
+                    sharedPreferences = container.sharedPreferences
                 ) as T
             }
 
