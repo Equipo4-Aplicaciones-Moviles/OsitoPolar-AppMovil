@@ -11,6 +11,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import com.example.ositopolarapp.core.data.PreferencesManager
 
 // Paleta OSCURA (placeholder, puedes ajustarla luego)
 private val DarkColorScheme = darkColorScheme(
@@ -39,12 +40,20 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun OsitoPolarAppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themePreference: String = PreferencesManager.THEME_SYSTEM,
     // Dynamic color (Android 12+) lo desactivamos por defecto
     // para que SIEMPRE se vean tus colores de marca.
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    val systemInDarkTheme = isSystemInDarkTheme()
+
+    val darkTheme = when (themePreference) {
+        PreferencesManager.THEME_LIGHT -> false
+        PreferencesManager.THEME_DARK -> true
+        else -> systemInDarkTheme // THEME_SYSTEM or default
+    }
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current

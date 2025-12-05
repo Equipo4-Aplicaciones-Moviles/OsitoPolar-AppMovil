@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /**
- * Entidad de Room para guardar el Token de Sesión del usuario.
+ * Entidad de Room para guardar el Token de Sesión y datos del usuario.
  * Solo necesitamos una entrada, por eso la @PrimaryKey es estática.
  */
 @Entity(tableName = "auth_tokens")
@@ -18,7 +18,30 @@ data class AuthToken(
     @ColumnInfo(name = "token")
     val token: String,
 
-    // 3. (Opcional, pero recomendado) Un timestamp para saber cuándo caduca.
+    // 3. User information from authentication response
+    @ColumnInfo(name = "user_id")
+    val userId: Int,
+
+    @ColumnInfo(name = "username")
+    val username: String,
+
+    @ColumnInfo(name = "user_type")
+    val userType: String,
+
+    @ColumnInfo(name = "profile_id")
+    val profileId: Int,
+
+    @ColumnInfo(name = "plan_id")
+    val planId: Int? = null,
+
+    // 4. 2FA status
+    @ColumnInfo(name = "requires_2fa")
+    val requires2FA: Boolean = false,
+
+    @ColumnInfo(name = "requires_two_factor_setup")
+    val requiresTwoFactorSetup: Boolean = false,
+
+    // 5. (Opcional, pero recomendado) Un timestamp para saber cuándo caduca.
     @ColumnInfo(name = "expiry_date")
     val expiryDate: Long? = null
 )

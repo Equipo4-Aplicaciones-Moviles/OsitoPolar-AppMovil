@@ -23,7 +23,9 @@ data class RegistrationUiState(
     val checkoutUrl: String? = null,
     val registrationComplete: Boolean = false,
     val error: String? = null,
-    val formData: CompleteRegistrationRequest? = null
+    val formData: CompleteRegistrationRequest? = null,
+    val generatedUsername: String? = null,
+    val generatedPassword: String? = null
 )
 
 class RegistrationViewModel(
@@ -124,15 +126,21 @@ class RegistrationViewModel(
             Log.i(TAG, "Paso 2: Ejecutando completeRegistration con SessionID: $sessionIdFromUrl")
 
             completeRegistrationUseCase(finalRequest)
-                .onSuccess {
+                .onSuccess { credentials ->
                     // 🚀 LOG DE ÉXITO EXPLICITO
-                    Log.i(TAG, "¡REGISTRO EXITOSO! Usuario creado en la BD.")
+                    Log.i(TAG, "¡REGISTRO EXITOSO! Usuario: ${credentials.first}, Password: ${credentials.second}")
 
                     // 3. LIMPIAR LOS DATOS TEMPORALES DESPUÉS DEL ÉXITO
                     prefs.edit().remove(PREF_FORM_DATA).apply()
 
                     _uiState.update {
-                        it.copy(isLoading = false, registrationComplete = true, formData = null)
+                        it.copy(
+                            isLoading = false,
+                            registrationComplete = true,
+                            formData = null,
+                            generatedUsername = credentials.first,
+                            generatedPassword = credentials.second
+                        )
                     }
                 }
                 .onFailure { error ->

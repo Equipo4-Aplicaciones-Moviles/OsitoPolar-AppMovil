@@ -16,7 +16,7 @@ interface AuthRepository {
 
     suspend fun completeRegistration(
         request: CompleteRegistrationRequest // Pasamos el request completo
-    ): Result<Unit> // Éxito o Fracaso
+    ): Result<Pair<String, String>> // Devuelve (username, password)
 
     suspend fun signIn( // <-- ¡Debe tener "suspend"!
         username: String,
@@ -24,6 +24,9 @@ interface AuthRepository {
     ): Result<AuthenticatedUserEntity>
 
     fun getSessionToken(): Flow<String?>
+
+    // Get current authenticated user data
+    fun getCurrentUser(): Flow<AuthenticatedUserEntity?>
 
     // Para cerrar la sesión
     suspend fun signOut()
@@ -33,5 +36,7 @@ interface AuthRepository {
         code: String
     ): Result<AuthenticatedUserEntity>
 
+    suspend fun enable2FA(username: String): Result<Unit>
 
+    suspend fun disable2FA(username: String): Result<Unit>
 }

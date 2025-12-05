@@ -15,6 +15,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ositopolarapp.core.di.AuthViewModelFactory
 import com.example.ositopolarapp.features.authentication.presentation.state.LoginViewModel
 import com.example.ositopolarapp.features.authentication.presentation.components.TwoFactorVerificationDialog
+import com.example.ositopolarapp.features.authentication.presentation.components.TwoFactorSetupDialog
 
 @Composable
 fun LoginScreen(
@@ -53,7 +54,18 @@ fun LoginScreen(
         }
     }
 
-    if (uiState.requires2FA) {
+    // Show 2FA Setup Dialog (first login)
+    if (uiState.requiresTwoFactorSetup) {
+        TwoFactorSetupDialog(
+            viewModel = viewModel,
+            uiState = uiState,
+            qrCodeDataUrl = uiState.user?.qrCodeDataUrl,
+            manualKey = uiState.user?.manualEntryKey
+        )
+    }
+
+    // Show 2FA Verification Dialog (subsequent logins)
+    if (uiState.requires2FA && !uiState.requiresTwoFactorSetup) {
         TwoFactorVerificationDialog(viewModel = viewModel, uiState = uiState)
     }
 
@@ -90,7 +102,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = { viewModel.signIn(username, password) },
+                onClick = { viewModel.signIn(username.trim(), password.trim()) },
                 enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()

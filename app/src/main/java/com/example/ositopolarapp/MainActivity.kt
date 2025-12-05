@@ -10,10 +10,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.example.ositopolarapp.navigation.AppNavigation
 import com.example.ositopolarapp.ui.theme.OsitoPolarAppTheme
 import com.example.ositopolarapp.core.di.AppContainer
+import com.example.ositopolarapp.core.data.PreferencesManager
 
 class MainActivity : ComponentActivity() {
 
@@ -32,7 +35,12 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            OsitoPolarAppTheme {
+            // Collect theme preference from DataStore
+            val themePreference by appContainer.preferencesManager.themePreference.collectAsState(
+                initial = PreferencesManager.THEME_SYSTEM
+            )
+
+            OsitoPolarAppTheme(themePreference = themePreference) {
                 Surface(modifier = Modifier.fillMaxSize()) {
 
                     // 1. Obtiene la referencia mutable de la URI
@@ -62,16 +70,36 @@ class MainActivity : ComponentActivity() {
      * Procesa un intent que podría contener un deep link.
      */
     private fun handleIntent(intent: Intent?) {
+        android.util.Log.d("MainActivity", "handleIntent called with action: ${intent?.action}")
+        android.util.Log.d("MainActivity", "Intent data: ${intent?.data}")
+
         if (intent?.action == Intent.ACTION_VIEW) {
             val uri = intent.data
-            if (uri != null &&
-                uri.scheme == "ositopolar" &&
-                uri.host == "registration"
-            ) {
-                deepLinkUri.value = uri
+            android.util.Log.d("MainActivity", "Deep link URI received: $uri")
 
-                // Evita que el intent se procese de nuevo
-                intent.data = null
+            if (uri != null && uri.scheme == "ositopolar") {
+                // Handle different deep link hosts
+                when (uri.host) {
+                    "registration" -> {
+                        android.util.Log.d("MainActivity", "Valid registration deep link detected")
+                        android.util.Log.d("MainActivity", "URI path: ${uri.path}")
+                        android.util.Log.d("MainActivity", "URI query params: ${uri.query}")
+                        deepLinkUri.value = uri
+                        intent.data = null
+                    }
+                    "rental" -> {
+                        android.util.Log.d("MainActivity", "Valid rental deep link detected")
+                        android.util.Log.d("MainActivity", "URI path: ${uri.path}")
+                        android.util.Log.d("MainActivity", "URI query params: ${uri.query}")
+                        deepLinkUri.value = uri
+                        intent.data = null
+                    }
+                    else -> {
+                        android.util.Log.w("MainActivity", "Unknown deep link host: ${uri.host}")
+                    }
+                }
+            } else {
+                android.util.Log.w("MainActivity", "Deep link scheme mismatch. Scheme: ${uri?.scheme}")
             }
         }
     }

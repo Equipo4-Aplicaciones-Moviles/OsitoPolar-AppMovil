@@ -9,14 +9,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.foundation.clickable
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable // Importar para guardar estado en rotación
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.example.ositopolarapp.features.authentication.data.dto.CompleteRegistrationRequest
+import com.example.ositopolarapp.features.authentication.presentation.components.TermsAndConditionsDialog
 import com.example.ositopolarapp.features.authentication.presentation.state.RegistrationViewModel
 
 @Composable
@@ -24,14 +30,11 @@ fun RegistrationScreen(
     viewModel: RegistrationViewModel,
     planId: Int,
     userType: String,
-    deepLinkUri: Uri?,
-    onRegistrationSuccess: () -> Unit,
-    onDeepLinkProcessed: () -> Unit
+    onRegistrationSuccess: (username: String, password: String) -> Unit
 ) {
     // --- ViewModel y Estado de la UI ---
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    var deepLinkHandled by rememberSaveable { mutableStateOf(false) }
 
     // 🛑 1. ESTADO LOCAL DEL FORMULARIO (Usando rememberSaveable para persistencia)
     var username by rememberSaveable { mutableStateOf("") }
@@ -45,6 +48,10 @@ fun RegistrationScreen(
     var city by rememberSaveable { mutableStateOf("") }
     var postalCode by rememberSaveable { mutableStateOf("") }
     var country by rememberSaveable { mutableStateOf("") }
+
+    // Estado para términos y condiciones
+    var termsAccepted by rememberSaveable { mutableStateOf(false) }
+    var showTermsDialog by remember { mutableStateOf(false) }
 
     // --- Manejo de Efectos (Reacciones al Estado) ---
 
@@ -62,34 +69,23 @@ fun RegistrationScreen(
         }
     }
 
-    // 3. Reacciona al Deep Link (Paso 2: Completar Registro)
-    LaunchedEffect(deepLinkUri) {
-        if (deepLinkUri != null && !deepLinkHandled) {
-
-            deepLinkHandled = true
-
-            try {
-                val sessionId = deepLinkUri.getQueryParameter("session_id")
-                if (deepLinkUri.path == "/success" && sessionId != null) {
-                    viewModel.completeRegistration(sessionId)
-                }
-            } finally {
-                onDeepLinkProcessed()
-            }
-        }
-    }
-
-    // 4. Reacciona al Éxito del Registro
+    // 3. Reacciona al Éxito del Registro (only from registration-complete route)
     LaunchedEffect(uiState.registrationComplete) {
-        if (uiState.registrationComplete) {
+        if (uiState.registrationComplete &&
+            uiState.generatedUsername != null &&
+            uiState.generatedPassword != null) {
+            Log.i("RegistrationScreen", "Registration completed successfully! Username: ${uiState.generatedUsername}")
             Toast.makeText(context, "Registro completado", Toast.LENGTH_LONG).show()
-            onRegistrationSuccess()
+            onRegistrationSuccess(uiState.generatedUsername!!, uiState.generatedPassword!!)
+        } else if (uiState.registrationComplete) {
+            Log.e("RegistrationScreen", "Registration marked complete but credentials are null! Username: ${uiState.generatedUsername}, Password present: ${uiState.generatedPassword != null}")
         }
     }
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
-            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            Log.e("RegistrationScreen", "Error occurred: $it")
+            Toast.makeText(context, "ERROR: $it", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -144,9 +140,42 @@ fun RegistrationScreen(
 
             Spacer(Modifier.height(24.dp))
 
+            // --- Términos y Condiciones ---
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = termsAccepted,
+                    onCheckedChange = { termsAccepted = it }
+                )
+
+                Text(
+                    text = buildAnnotatedString {
+                        append("He leído y acepto los ")
+                        withStyle(
+                            style = SpanStyle(
+                                color = MaterialTheme.colorScheme.primary,
+                                textDecoration = TextDecoration.Underline
+                            )
+                        ) {
+                            append("Términos y Condiciones")
+                        }
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.clickable { showTermsDialog = true }
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
             // --- Botón de Envío ---
             Button(
                 onClick = {
+                    if (!termsAccepted) {
+                        Toast.makeText(context, "Debes aceptar los Términos y Condiciones.", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
                     if (username.isBlank() || email.isBlank() || firstName.isBlank() || lastName.isBlank()) {
                         Toast.makeText(context, "Completa los campos de nombre y email.", Toast.LENGTH_SHORT).show()
                         return@Button
@@ -180,6 +209,19 @@ fun RegistrationScreen(
             ) {
                 CircularProgressIndicator()
             }
+        }
+
+        // --- Diálogo de Términos y Condiciones ---
+        if (showTermsDialog) {
+            TermsAndConditionsDialog(
+                onAccept = {
+                    termsAccepted = true
+                    showTermsDialog = false
+                },
+                onDismiss = {
+                    showTermsDialog = false
+                }
+            )
         }
     }
 }

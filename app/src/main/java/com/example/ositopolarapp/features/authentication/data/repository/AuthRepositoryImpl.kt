@@ -11,6 +11,7 @@ import com.example.ositopolarapp.features.authentication.domain.repository.AuthR
 import com.example.ositopolarapp.features.authentication.data.dto.Verify2FARequest
 
 import com.example.ositopolarapp.features.authentication.data.dto.SignInRequest
+import com.example.ositopolarapp.features.authentication.data.mapper.toAuthToken
 import com.example.ositopolarapp.features.authentication.data.mapper.toEntity
 import com.example.ositopolarapp.features.authentication.domain.model.AuthenticatedUserEntity
 import java.io.IOException
@@ -26,6 +27,15 @@ class AuthRepositoryImpl(
     private val apiService: AuthApiService,
     private val authDao: AuthDao
 ) : AuthRepository {
+
+    private fun getDefaultErrorMessage(httpCode: Int): String {
+        return when (httpCode) {
+            400 -> "Datos inválidos o sesión de pago ya utilizada"
+            404 -> "Sesión de pago no encontrada"
+            500 -> "Error del servidor. Intenta de nuevo más tarde"
+            else -> "Error: $httpCode - Contacta soporte si el problema persiste"
+        }
+    }
 
     override suspend fun createRegistrationCheckout(
         planId: Int,
@@ -63,19 +73,65 @@ class AuthRepositoryImpl(
 
     override suspend fun completeRegistration(
         request: CompleteRegistrationRequest
-    ): Result<Unit> {
+    ): Result<Pair<String, String>> {
         return try {
+            Log.i("AuthService", "=== INICIANDO completeRegistration ===")
+            Log.i("AuthService", "SessionID: ${request.sessionId}")
+            Log.i("AuthService", "Username: ${request.username}")
+            Log.i("AuthService", "Email: ${request.email}")
+
             val response = apiService.completeRegistration(request)
-            if (response.isSuccessful) {
-                (Log.i("AuthService", "Registro completado..."))
-                Result.success(Unit)
+
+            Log.i("AuthService", "Response Code: ${response.code()}")
+            Log.i("AuthService", "Response Success: ${response.isSuccessful}")
+
+            if (response.isSuccessful && response.body() != null) {
+                val credentials = response.body()!!
+                Log.i("AuthService", "✅ Registro completado exitosamente!")
+                Log.i("AuthService", "Usuario generado: ${credentials.username}")
+                // Devuelve username y password como Pair
+                Result.success(Pair(credentials.username, credentials.password))
             } else {
-                println("AuthService Error: Fallo en el registro. Código HTTP: ${response.code()}")
-                println("AuthService Error Body: ${response.errorBody()?.string()}")
-                Result.failure(Exception("Error: ${response.message()}"))
+                val errorBody = response.errorBody()?.string()
+                Log.e("AuthService", "❌ ERROR en registro!")
+                Log.e("AuthService", "Código HTTP: ${response.code()}")
+                Log.e("AuthService", "Mensaje: ${response.message()}")
+                Log.e("AuthService", "Error Body: $errorBody")
+
+                // Parse error message from backend
+                val errorMsg = try {
+                    if (errorBody != null) {
+                        // Try to parse JSON error message
+                        val jsonObject = org.json.JSONObject(errorBody)
+                        val backendMessage = jsonObject.optString("message", "")
+
+                        // Map backend error messages to user-friendly Spanish messages
+                        when {
+                            backendMessage.contains("Username already exists", ignoreCase = true) ->
+                                "Este nombre de usuario ya está registrado. Intenta con otro correo o username."
+                            backendMessage.contains("session", ignoreCase = true) ->
+                                "La sesión de pago ya fue utilizada o expiró."
+                            backendMessage.contains("Invalid", ignoreCase = true) ->
+                                "Datos inválidos: $backendMessage"
+                            backendMessage.isNotEmpty() -> backendMessage
+                            else -> getDefaultErrorMessage(response.code())
+                        }
+                    } else {
+                        getDefaultErrorMessage(response.code())
+                    }
+                } catch (e: Exception) {
+                    Log.e("AuthService", "Error parsing error body", e)
+                    getDefaultErrorMessage(response.code())
+                }
+
+                Result.failure(Exception(errorMsg))
             }
+        } catch (e: IOException) {
+            Log.e("AuthService", "❌ Error de red en completeRegistration", e)
+            Result.failure(Exception("Error de conexión. Verifica tu internet."))
         } catch (e: Exception) {
-            Result.failure(e)
+            Log.e("AuthService", "❌ Exception en completeRegistration: ${e.message}", e)
+            Result.failure(Exception("Error inesperado: ${e.message}"))
         }
     }
 
@@ -91,18 +147,15 @@ class AuthRepositoryImpl(
                 return Result.failure(Exception("Credenciales incorrectas o respuesta vacía."))
             }
 
-            // 🚀 LÓGICA DE PERSISTENCIA DEL TOKEN:
-            responseDto.token.let { tokenString ->
-                val authToken = AuthToken(
-                    token = tokenString,
-                    // CORRECCIÓN 2: Eliminamos la referencia a expiryTimestamp (no existe en el DTO)
-                    expiryDate = System.currentTimeMillis() + (7L * 24 * 60 * 60 * 1000)
-                )
-                authDao.insertToken(authToken) // Guarda el token en Room
-            }
+            // 🚀 LÓGICA DE PERSISTENCIA DEL TOKEN Y USER DATA:
+            val userEntity = responseDto.toEntity()
+            val authToken = userEntity.toAuthToken().copy(
+                expiryDate = System.currentTimeMillis() + (7L * 24 * 60 * 60 * 1000)
+            )
+            authDao.insertToken(authToken) // Guarda el token y datos del usuario en Room
 
             // CORRECCIÓN 3: Usamos Result.success()
-            Result.success(responseDto.toEntity())
+            Result.success(userEntity)
         } catch (e: IOException) {
             Result.failure(Exception("Error de red. Asegúrate de estar conectado."))
         } catch (e: Exception) {
@@ -123,18 +176,16 @@ class AuthRepositoryImpl(
 
             if (response.isSuccessful && responseDto != null) {
 
-                // 1. PERSISTENCIA: Si la verificación es exitosa, guardamos el token
-                responseDto.token.let { tokenString ->
-                    val authToken = AuthToken(
-                        token = tokenString,
-                        // Asumimos 7 días de validez si el backend no proporciona un timestamp de expiración
-                        expiryDate = System.currentTimeMillis() + (7L * 24 * 60 * 60 * 1000)
-                    )
-                    authDao.insertToken(authToken) // Guarda el token en Room
-                }
+                // 1. PERSISTENCIA: Si la verificación es exitosa, guardamos el token y user data
+                val userEntity = responseDto.toEntity()
+                val authToken = userEntity.toAuthToken().copy(
+                    // Asumimos 7 días de validez si el backend no proporciona un timestamp de expiración
+                    expiryDate = System.currentTimeMillis() + (7L * 24 * 60 * 60 * 1000)
+                )
+                authDao.insertToken(authToken) // Guarda el token en Room
 
                 // 2. Éxito: Devolvemos la entidad de usuario
-                Result.success(responseDto.toEntity())
+                Result.success(userEntity)
 
             } else if (response.code() == 401) {
                 // Código 401: Típicamente, credenciales inválidas (código 2FA incorrecto)
@@ -164,10 +215,59 @@ class AuthRepositoryImpl(
         return authDao.getToken().map { it?.token }
     }
 
+    // Get current authenticated user data
+    override fun getCurrentUser(): Flow<AuthenticatedUserEntity?> {
+        return authDao.getToken().map { authToken ->
+            authToken?.toEntity()
+        }
+    }
+
     // CORRECCIÓN 4: Asegúrate de que este método esté en la interfaz
     override suspend fun signOut() {
         authDao.deleteToken() // Elimina todos los tokens
     }
 
+    override suspend fun enable2FA(username: String): Result<Unit> {
+        return try {
+            val request = com.example.ositopolarapp.features.authentication.data.dto.UsernameRequest(username)
+            val response = apiService.enable2FA(request)
 
+            if (response.isSuccessful) {
+                // Update local user data to reflect 2FA enabled
+                val currentToken = authDao.getTokenOnce()
+                currentToken?.let {
+                    authDao.insertToken(it.copy(requires2FA = true))
+                }
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Error al habilitar 2FA: ${response.message()}"))
+            }
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de red. Asegúrate de estar conectado."))
+        } catch (e: Exception) {
+            Result.failure(Exception("Fallo al habilitar 2FA: ${e.message}"))
+        }
+    }
+
+    override suspend fun disable2FA(username: String): Result<Unit> {
+        return try {
+            val request = com.example.ositopolarapp.features.authentication.data.dto.UsernameRequest(username)
+            val response = apiService.disable2FA(request)
+
+            if (response.isSuccessful) {
+                // Update local user data to reflect 2FA disabled
+                val currentToken = authDao.getTokenOnce()
+                currentToken?.let {
+                    authDao.insertToken(it.copy(requires2FA = false))
+                }
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Error al deshabilitar 2FA: ${response.message()}"))
+            }
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de red. Asegúrate de estar conectado."))
+        } catch (e: Exception) {
+            Result.failure(Exception("Fallo al deshabilitar 2FA: ${e.message}"))
+        }
+    }
 }
